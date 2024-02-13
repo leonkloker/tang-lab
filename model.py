@@ -6,54 +6,23 @@ import sklearn.linear_model as sklin
 from sklearn.preprocessing import StandardScaler
 import sys
 
+import read_data
+
 # Read in data
-df = pd.read_csv('compiled_baso_data_annotated.csv')
+file = '14_populations.pickle'
+x, y, combinations = read_data.load_data(file)
 
-# Group by Baso population
-populations = df.groupby("Baso population #")
-
-# Get activation percentage for each population
-y_raw = np.array(populations.mean()["% of activated basophils"])
-
-# Get cells per population
-cells_per_population = np.array(populations.size())
-
-# Create all possible combinations of populations
-combined_populations = []
-combinations = []
-combined_y = []
-for k in range(1, len(populations) + 1):
-    for combination in itertools.combinations(range(len(populations)), k):
-
-        # Remember the combinations
-        combinations.append(combination)
-
-        # Combine the populations
-        combined_populations.append(np.array(df[(df["Baso population #"] - 1).isin(combination)])[:, 1:-1])
-
-        # Get the activation rate for the combined population
-        combined_y.append(np.average([y_raw[i] for i in combination], weights=[cells_per_population[i] for i in combination]))
-
-# Calculate the features for each combined population
-mean = np.array([np.mean(combined_population, axis=0) for combined_population in combined_populations])
-std = np.array([np.std(combined_population, axis=0) for combined_population in combined_populations])
-skew = np.array([pd.DataFrame(combined_population).skew() for combined_population in combined_populations])
-kurt = np.array([pd.DataFrame(combined_population).kurt() for combined_population in combined_populations])
-
-# Labels to percentages
-y = np.array(combined_y) / 100
-
-# Create the feature matrix (choose which features to use)
-x = np.concatenate((mean, ), axis=1)
+# Use only the mean as a feature
+x = x[:, :24]
 
 # Define models
-alpha = 0.01
+alpha = 0.5
 linear = sklin.LinearRegression()
 lasso = sklin.Lasso(alpha=alpha, max_iter=10000)
 ridge = sklin.Ridge(alpha=alpha, max_iter=10000)
 
 # K-fold cross validation (where k = number of base populations)
-k = len(populations)
+k = max(combinations[-1])
 scores = []
 mses = []
 maes = []
@@ -97,7 +66,7 @@ print("Ridge Regression with alpha = {}".format(alpha), "- mean absolute error: 
 # Confusion matrix for all 2^n - 1 combinations of populations and their respective activation rates
 # when using the linear model and binning the activation rates into 4 categories:
 # 0 - 13%, 13 - 35%, 35 - 56%, 56 - 100%
-""" bins = [0.13, 0.35, 0.56]
+bins = [0.13, 0.35, 0.56]
 predictions = ridge.predict(scaler.transform(x))
 predictions = np.digitize(predictions, bins)
 y = np.digitize(y, bins)
@@ -107,10 +76,10 @@ for i in range(len(predictions)):
 print("")
 print("Confusion matrix of best model after binning predictions into 4 categories")
 print("0 - 13%, 13 - 35%, 35 - 56%, 56 - 100% : ")
-print(confusion_matrix) """
+print(confusion_matrix)
 
 # Train the model on the entire dataset and save it
-ridge = ridge.fit(scaler.fit_transform(x), y)
-joblib.dump(ridge, "./models/ridge_model.pkl")
-joblib.dump(scaler, "./models/scaler.pkl")
+#ridge = ridge.fit(scaler.fit_transform(x), y)
+#joblib.dump(ridge, "./models/ridge_model.pkl")
+#joblib.dump(scaler, "./models/scaler.pkl")
 
