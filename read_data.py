@@ -3,6 +3,7 @@ import numpy as np
 import itertools
 import pickle
 
+# Read in data from a csv file and return the combined populations and their activation rates
 def get_data(file, combine=False):
     features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)] + ['cd63+']
     df = pd.read_csv(file)[features]
@@ -46,6 +47,7 @@ def get_data(file, combine=False):
     combined_y = np.array(combined_y) / 100
     return combined_populations, combined_y, combinations
 
+# take a list of combined populations and return the statistical moment features
 def get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt"]):
     # Calculate the features for each combined population
     x = []
@@ -61,12 +63,14 @@ def get_statistical_moment_features(combined_populations, features=["mean", "std
     x = np.concatenate(x, axis=1)
     return x
 
+# Save the features and the activation rates to a file
 def save_data(file, x, y, combinations):
     with open(file, 'wb') as f:
         pickle.dump(x, f)
         pickle.dump(y, f)
         pickle.dump(combinations, f)
 
+# Load the features and the activation rates from a file
 def load_data(file):
     with open(file, 'rb') as f:
         x = pickle.load(f)

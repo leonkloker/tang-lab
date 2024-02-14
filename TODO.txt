@@ -1,0 +1,4 @@
+Meeting 02/13/2024:
+- Train ridge model with alpha = 0.1 on only 8 samples and their combinations and evaluate on the remaining eight
+- Subsample roughly 20% of cells of each sample and then train on 80% and test on the left-out test samples
+- Train SVM similar to linear regression model
