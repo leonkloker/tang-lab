@@ -20,15 +20,16 @@ def plot_prediction(y, y_pred, savepath):
 
 # given the ground truth and the prediction,
 # plot the confusion matrix and save the plot
-def plot_confusion_matrix(y_true, y_pred, bins, savepath):
-    y_pred_binned = np.digitize(y_pred, bins=bins)
-    y_binned = np.digitize(y_true, bins=bins)
-    cm = confusion_matrix(y_binned, y_pred_binned)
+def plot_confusion_matrix(y_true, y_pred, bins, savepath, labels=False):
+    if not labels:
+        y_pred = np.digitize(y_pred, bins=bins)
+        y_true = np.digitize(y_true, bins=bins)
+    cm = confusion_matrix(y_true, y_pred)
     
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     disp.plot(cmap=plt.cm.Blues)
-    plt.xticks(ticks=np.linspace(-0.5, (bins.shape[0]-2) + 0.5, bins.shape[0]), labels=[f'{x:.1f}' for x in bins])
-    plt.yticks(ticks=np.linspace(-0.5, (bins.shape[0]-2) + 0.5, bins.shape[0]), labels=[f'{x:.1f}' for x in bins])
+    plt.xticks(ticks=np.linspace(-0.5, (len(bins)-2) + 0.5, len(bins)), labels=[f'{x:.2f}' for x in bins])
+    plt.yticks(ticks=np.linspace(-0.5, (len(bins)-2) + 0.5, len(bins)), labels=[f'{x:.2f}' for x in bins])
     plt.tick_params(axis='x', direction='inout', labeltop=True, labelbottom=False)
     plt.title('Confusion Matrix')
     plt.xlabel('Predicted')
