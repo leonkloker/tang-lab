@@ -32,13 +32,14 @@ file = './data/16_populations.pickle'
 x, y = data.load_data(file)
 
 # Get train and test populations
-#x_train, y_train, x_test, y_test = data.subsample_populations(x, y, split=0.5, combine_train=True, combine_test=False, max_combs=2**13)
-x_train, y_train, x_test, y_test = data.get_train_test_split(x, y, split=0.8, combine_train=True, combine_test=False)
+x_train, y_train, x_test, y_test = data.subsample_populations(x, y, split=0.5, combine_train=True, combine_test=False, max_combs=2**13)
+#x_train, y_train, x_test, y_test = data.get_train_test_split(x, y, split=0.625, combine_train=True, combine_test=False)
 
 # Get statistical moment features
 features = ["mean"]#, "std", "skew", "kurt"]
-x_train = data.get_statistical_moment_features(x_train, features)
-x_test = data.get_statistical_moment_features(x_test, features)
+ifc_features = np.arange(0, 12)
+x_train = data.get_statistical_moment_features(x_train, features)[:, ifc_features]
+x_test = data.get_statistical_moment_features(x_test, features)[:, ifc_features]
 
 # Bin labels for classification
 bins = [0., 0.05, 0.20, 0.50, 1.]
