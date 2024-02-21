@@ -4,7 +4,7 @@ Meeting 02/13/2024:
 * - Train SVM similar to linear regression model
 
 Meeting 02/20/2024:
-- Include opacity values as features (divide the 5 higher-frequency amplitudes by the lowest frequency amplitude to get 5 additional features)
+* - Include opacity values as features (divide the 5 higher-frequency amplitudes by the lowest frequency amplitude to get 5 additional features)
 - Subsampling by splitting one sample into a train and test sample and then within each train / test sample
 resample arbitrary amount of times and combine with other train / test samples to get augmented dataset
 - Ablation study for each feature: Remove one feature at a time and get the results of lasso regression model

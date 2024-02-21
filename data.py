@@ -24,6 +24,20 @@ def get_data(file):
 
     return samples, y_raw
 
+# Add the opacity to the populations and return the populations
+def add_opacity(populations):
+    opacity = []
+    for population in populations:
+        opacity_pop = []
+        for cell in population:
+            opacity_pop.append(cell[1:6] / cell[0])
+        opacity.append(np.array(opacity_pop))
+
+    for i in range(len(populations)):
+        populations[i] = np.concatenate([populations[i], opacity[i]], axis=1)
+    
+    return populations
+
 # Split the populations into a train and test set and return the combination of the populations and the activation rates
 def get_train_test_split(populations, y_raw, split=0.8, combine_train=True, combine_test=False, max_combs=np.inf):
     n_populations = len(populations)
@@ -95,6 +109,7 @@ def combine_populations(populations, y_raw, combine=True, max_combs=np.inf):
 def get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt"]):
     # Calculate the features for each combined population
     x = []
+        
     if "mean" in features:
         x.append(np.array([np.mean(combined_population, axis=0) for combined_population in combined_populations]))
     if "std" in features:
@@ -146,16 +161,7 @@ def load_data(file, combinations=False):
 
 if __name__ == "__main__":
     file = './data/bat_ifc.csv'
-    #features = get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt"])
-    """ features = np.load('14_populations_x.npy')
-    combined_y = np.load('14_populations_y.npy')
-    combinations = []
-    for k in range(1, 15):
-        for combination in itertools.combinations(range(14), k):
-            combinations.append(combination)
-    
-            
-    save_data('14_populations.pickle', features, combined_y, combinations) """
-
     samples, y = get_data(file)
-    save_data('./data/{}_populations.pickle'.format(len(samples)), samples, y)
+    samples = add_opacity(samples)
+    save_data('./data/16_populations.pickle', samples, y, combinations=False)
+

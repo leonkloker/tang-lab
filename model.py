@@ -37,7 +37,7 @@ x_train, y_train, x_test, y_test = data.subsample_populations(x, y, split=0.8, c
 
 # Get statistical moment features
 features = ["mean"]#, "std", "skew", "kurt"]
-ifc_features = np.arange(0, 12)
+ifc_features = np.arange(0, 17)
 x_train = data.get_statistical_moment_features(x_train, features)[:, ifc_features]
 x_test = data.get_statistical_moment_features(x_test, features)[:, ifc_features]
 
