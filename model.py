@@ -32,7 +32,7 @@ file = './data/16_populations.pickle'
 x, y = data.load_data(file)
 
 # Get train and test populations
-x_train, y_train, x_test, y_test = data.subsample_populations(x, y, split=0.5, combine_train=True, combine_test=False, max_combs=2**13)
+x_train, y_train, x_test, y_test = data.subsample_populations(x, y, split=0.8, combine_train=True, combine_test=False, max_combs=2**13)
 #x_train, y_train, x_test, y_test = data.get_train_test_split(x, y, split=0.625, combine_train=True, combine_test=False)
 
 # Get statistical moment features
