@@ -5,7 +5,7 @@ import pickle
 import scipy
 import matplotlib.pyplot as plt
 
-np.random.seed(40)
+np.random.seed(41)
 
 # Read in data from a csv file and return the populations and the activation rates
 def get_data(file):
