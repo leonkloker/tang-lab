@@ -39,9 +39,9 @@ def add_opacity(populations):
     return populations
 
 # Split the populations into a train and test set and return the combination of the populations and the activation rates
-def get_train_test_split(populations, y_raw, split=0.8, combine_train=True, combine_test=False, max_combs=np.inf):
+def get_train_test_split(populations, y_raw, train_split=0.8, combine_train=True, combine_test=False, max_combs=np.inf):
     n_populations = len(populations)
-    train_idx = np.random.choice(n_populations, int(n_populations*split), replace=False)
+    train_idx = np.random.choice(n_populations, int(n_populations*train_split), replace=False)
     test_idx = [i for i in range(n_populations) if i not in train_idx]
     train_samples = [populations[i] for i in train_idx]
     test_samples = [populations[i] for i in test_idx]
@@ -54,12 +54,15 @@ def get_train_test_split(populations, y_raw, split=0.8, combine_train=True, comb
     return combined_x_train, combined_y_train, combined_x_test, combined_y_test
 
 # Subsample the populations and return the combination of the subsampled populations and the activation rates
-def subsample_populations(populations, y_raw, split=0.8, combine_train=True, combine_test=False, max_combs=np.inf):
+# Here, each base population is split randomly into a train and test set
+# If combine_train is True, the train sets are combined into all possible combinations
+# If combine_test is True, the test sets are combined into all possible combinations
+def subsample_populations_mixy(populations, y_raw, train_split=0.8, combine_train=True, combine_test=False, max_combs=np.inf):
     train_samples = []
     test_samples = []
     for population in populations:
         n = population.shape[0]
-        train_idx = np.random.choice(n, int(n*split), replace=False)
+        train_idx = np.random.choice(n, int(n*train_split), replace=False)
         test_idx = [i for i in range(n) if i not in train_idx]
         train_samples.append(population[train_idx, :])
         test_samples.append(population[test_idx, :])
@@ -68,6 +71,30 @@ def subsample_populations(populations, y_raw, split=0.8, combine_train=True, com
     combined_x_test, combined_y_test, _ = combine_populations(test_samples, y_raw, combine=combine_test, max_combs=max_combs)
         
     return combined_x_train, combined_y_train, combined_x_test, combined_y_test
+
+# Subsample the populations and return the combination of the subsampled populations and the activation rates
+# Here, each base population of size n is split randomly into a train and test set
+# the train and test sets are resampled to yield size n * train_split * sample_size
+# Hence, base populations are not mixed
+def subsample_populations_consty(populations, y_raw, train_split=0.8, sample_size=0.7, combs_per_sample=2**12):
+    train_samples = []
+    test_samples = []
+    y_train = []
+    y_test = []
+    for population, y in zip(populations, y_raw):
+        n = population.shape[0]
+        train_idx = np.random.choice(n, int(n*train_split), replace=False)
+        test_idx = [i for i in range(n) if i not in train_idx]
+
+        for i in range(combs_per_sample):
+            train_idx_sub = np.random.choice(train_idx, int(len(train_idx)*sample_size), replace=False)
+            train_samples.append(population[train_idx_sub, :])
+            y_train.append(y)
+
+        test_samples.append(population[test_idx, :])
+        y_test.append(y)
+        
+    return train_samples, y_train, test_samples, y_test
 
 # Combine populations and return the combined populations and the activation rates
 def combine_populations(populations, y_raw, combine=True, max_combs=np.inf):
@@ -122,6 +149,13 @@ def get_statistical_moment_features(combined_populations, features=["mean", "std
     x = np.concatenate(x, axis=1)
     return x
 
+def bin(y, bins, verbose=False):
+    y = np.digitize(y, bins)
+    if verbose:
+        for i in range(len(bins)-1):
+            print("{} samples with {} < y <= {}".format(np.sum(y == i+1), bins[i], bins[i+1]))
+    return y
+
 # take a list of combined populations and return the marginal estimated pdf of each feature
 # evaluated at the query points
 def get_marginal_distributions(features_list, query_points, method='kde'):
@@ -163,5 +197,5 @@ if __name__ == "__main__":
     file = './data/bat_ifc.csv'
     samples, y = get_data(file)
     samples = add_opacity(samples)
-    save_data('./data/16_populations.pickle', samples, y, combinations=False)
+    #save_data('./data/19_populations.pickle', samples, y, combinations=False)
 

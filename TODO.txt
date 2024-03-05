@@ -8,12 +8,12 @@ Meeting 02/20/2024:
 * - Ablation study for each feature: Remove one feature at a time and get the results of lasso regression model
 
 Meeting 02/27/2024:
-- Subsampling by splitting one sample into a train and test sample and then within each train / test sample
+* - Subsampling by splitting one sample into a train and test sample and then within each train / test sample
 resample arbitrary amount of times and combine with other train / test samples to get augmented dataset
-- Find out which feature have zero lasso-coefficient reliable throughout different train/test splits
-- Get test error progression with larger amount of base datapoints to check if more data could be beneficial
+* - Find out which feature have zero lasso-coefficient reliable throughout different train/test splits
+* - Get test error progression with larger amount of base datapoints to check if more data could be beneficial
 (use first n base populations and split them into test and train, then test on their test parts as well as the remaining
 N-n unused base populations)
 - Look into PCA of the feature matrix to identify relevant features
-- Fix ablation plot to include baseline model and only plot for lasso to see the importance (or use log-scale)
+* - Fix ablation plot to include baseline model and only plot for lasso to see the importance (or use log-scale)
 
