@@ -14,6 +14,10 @@ resample arbitrary amount of times and combine with other train / test samples t
 * - Get test error progression with larger amount of base datapoints to check if more data could be beneficial
 (use first n base populations and split them into test and train, then test on their test parts as well as the remaining
 N-n unused base populations)
-- Look into PCA of the feature matrix to identify relevant features
+* - Look into PCA of the feature matrix to identify relevant features
 * - Fix ablation plot to include baseline model and only plot for lasso to see the importance (or use log-scale)
+
+Meeting 03/05/2024:
+- Check if frequencies can be removed entirely
+- Run pipeline on 203 instead of CD63
 
