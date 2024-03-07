@@ -31,7 +31,8 @@ def train_model(pipeline, train, test, classification=False, weights=None):
     return pipeline, y_pred, metric
 
 # Read in the base populations
-file = './data/19_populations.pickle'
+antigen = "cd203c_norm_diff"
+file = './data/19_populations_{}.pickle'.format(antigen)
 x, y = data.load_data(file)
 
 # Shuffle the data
@@ -130,16 +131,16 @@ print("Ridge Regression with alpha = {}".format(alpha_ridge), ": mean absolute e
 print("Support Vector Regression : mean absolute error = ", mae_svr)
 print("Support Vector Classifier : f1 score = ", f1_svc)
 
-evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/linear/linear_regression.png")
-evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/linear/lasso_regression.png")
-evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/linear/ridge_regression.png")
-evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/linear/support_vector_regression.png")
+evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/models/linear_regression_{}.png".format(antigen), title=mae_linear)
+evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/models/lasso_regression_{}.png".format(antigen), title=mae_lasso)
+evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/models/ridge_regression_{}.png".format(antigen), title=mae_ridge)
+evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/models/support_vector_regression_{}.png".format(antigen), title=mae_svr)
 
-evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/linear/linear_regression_confusion_matrix.png")
-evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/linear/lasso_regression_confusion_matrix.png")
-evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/linear/ridge_regression_confusion_matrix.png")
-evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/linear/sv_regression_confusion_matrix.png")
-evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/linear/sv_classifier_confusion_matrix.png", labels=True)
+evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/models/linear_regression_confusion_matrix_{}.png".format(antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/models/lasso_regression_confusion_matrix_{}.png".format(antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/models/ridge_regression_confusion_matrix_{}.png".format(antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/models/sv_regression_confusion_matrix_{}.png".format(antigen))
+evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/models/sv_classifier_confusion_matrix_{}.png".format(antigen), labels=True)
 
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")

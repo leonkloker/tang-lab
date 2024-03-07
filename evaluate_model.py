@@ -7,10 +7,11 @@ import matplotlib.pyplot as plt
 
 # given the ground truth and the prediction, 
 # plot the ground truth vs the prediction and save the plot
-def plot_prediction(y, y_pred, savepath):
+def plot_prediction(y, y_pred, savepath, title=None):
     plt.figure()
-    plt.scatter(y, y_pred)
+    plt.scatter(y, y_pred, label='MAE: {}'.format(title))
     plt.scatter(y, y, marker='x', color='red')
+    plt.legend()
     plt.plot([0, 1], [0, 1], color='red')
     plt.grid()
     plt.xlabel('Ground truth')

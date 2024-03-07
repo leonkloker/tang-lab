@@ -6,18 +6,25 @@ import scipy
 import matplotlib.pyplot as plt
 
 # Read in data from a csv file and return the populations and the activation rates
-def get_data(file):
-    features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)] + ['cd63+']
+def get_data(file, antigen="cd63+"):
+    features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)] + [antigen]
     df = pd.read_csv(file)[features]
 
     # Group by Baso population
-    populations = df.groupby("cd63+")
+    populations = df.groupby(antigen)
+
+    if antigen == "cd203c_norm_diff":
+        denominator = 1
+    else:
+        denominator = 100
 
     # Get activation percentage for each population
-    y_raw = np.array(populations.mean().reset_index()["cd63+"]) / 100
+    y_raw = np.array(populations.mean().reset_index()[antigen]) / denominator
 
     samples = []
-    for _, population in populations:
+    for i, (_, population) in enumerate(populations):
+        if y_raw[i] > 1:
+            continue
         samples.append(population.iloc[:, :-1].to_numpy())
 
     return samples, y_raw
@@ -192,8 +199,9 @@ def load_data(file, combinations=False):
             return x, y
 
 if __name__ == "__main__":
+    antigen = "cd203c_norm_diff"
     file = './data/bat_ifc.csv'
-    samples, y = get_data(file)
+    samples, y = get_data(file, antigen=antigen)
     samples = add_opacity(samples)
-    #save_data('./data/19_populations.pickle', samples, y, combinations=False)
+    save_data('./data/19_populations_{}.pickle'.format(antigen), samples, y, combinations=False)
 

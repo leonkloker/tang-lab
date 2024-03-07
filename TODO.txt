@@ -18,6 +18,8 @@ N-n unused base populations)
 * - Fix ablation plot to include baseline model and only plot for lasso to see the importance (or use log-scale)
 
 Meeting 03/05/2024:
-- Check if frequencies can be removed entirely
-- Run pipeline on 203 instead of CD63
+- Check if frequencies can be removed entirely (SVM close to zero more important than high activation performance)
+* - Run pipeline on 203 and Avidin instead of CD63
+- Norm of coefficient vector vs amount of base datapoints in dataset 
+- UMAP or visualization of datapoints for paper purposes
 
