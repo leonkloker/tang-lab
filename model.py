@@ -58,7 +58,7 @@ svc_coef = []
 # Control the dataset size
 max_combs = 2**13
 
-for n in range(N-5, 0, -1):
+for n in range(1, 0, -1):
 
     # Subsample the populations to get dataset
     x_train_mixy, y_train_mixy, x_test_mixy, y_test_mixy = data.subsample_populations_mixy(x[:-n], y[:-n], train_split=0.5, combine_train=True, combine_test=False, max_combs=max_combs)
@@ -74,7 +74,7 @@ for n in range(N-5, 0, -1):
     features = ["mean"] #, "std", "skew", "kurt"]
 
     # Define which frequencies to remove
-    rm_freqs = []
+    rm_freqs = [2,5]
 
     # Baseline features for best performing model
     ifc_features_baseline = np.array([0,6,7,8,9,10,11,13,14,16])
@@ -151,7 +151,7 @@ for n in range(N-5, 0, -1):
     svr_coef.append(np.linalg.norm(svr_pipeline.named_steps['model'].coef_))
     svc_coef.append(np.linalg.norm(svc_pipeline.named_steps['model'].coef_))
 
-plt.figure()
+""" plt.figure()
 plt.plot(np.arange(len(linear_mae), 0, -1), linear_mae, label="Linear Regression")
 plt.plot(np.arange(len(linear_mae), 0, -1), lasso_mae, label="Lasso Regression")
 plt.plot(np.arange(len(linear_mae), 0, -1), ridge_mae, label="Ridge Regression")
@@ -175,11 +175,11 @@ plt.ylabel("L2 norm of coefficients")
 plt.title("Model complexity as a function of dataset size")
 plt.grid()
 plt.xlim(len(linear_mae), 0)
-plt.savefig("./figures/coef_over_dataset.png")
+plt.savefig("./figures/coef_over_dataset.png") """
 
 
 # Print MAEs (R^2 not accessible as val set size is 1)
-""" print("Linear Regression : mean absolute error = ", mae_linear)
+print("Linear Regression : mean absolute error = ", mae_linear)
 print("Lasso Regression with alpha = {}".format(alpha_lasso),  ": mean absolute error = ", mae_lasso)
 print("Ridge Regression with alpha = {}".format(alpha_ridge), ": mean absolute error = ", mae_ridge)
 print("Support Vector Regression : mean absolute error = ", mae_svr)
@@ -195,7 +195,7 @@ evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/mode
 evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/models/no_frequency{}/ridge_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/models/no_frequency{}/sv_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/models/no_frequency{}/sv_classifier_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
-"""
+
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")
 pickle.dump(linear_mae, file)
