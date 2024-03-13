@@ -31,8 +31,8 @@ def train_model(pipeline, train, test, classification=False, weights=None):
     return pipeline, y_pred, metric
 
 # Read in the base populations
-antigen = "cd63+"
-file = './data/19_populations_{}.pickle'.format(antigen)
+antigen = "cd63"
+file = './data/20_populations_{}.pickle'.format(antigen)
 x, y = data.load_data(file)
 
 # Shuffle the data
@@ -58,8 +58,8 @@ svc_coef = []
 # Control the dataset size
 max_combs = 2**13
 
-for n in range(N-11, 0, -1):
-    print(n)
+for n in range(N-5, 0, -1):
+
     # Subsample the populations to get dataset
     x_train_mixy, y_train_mixy, x_test_mixy, y_test_mixy = data.subsample_populations_mixy(x[:-n], y[:-n], train_split=0.5, combine_train=True, combine_test=False, max_combs=max_combs)
     x_train_consty, y_train_consty, x_test_consty, y_test_consty = data.subsample_populations_consty(x[:-n], y[:-n], train_split=0.6, sample_size=0.8, combs_per_sample=int(max_combs/len(x)))
@@ -178,24 +178,24 @@ plt.xlim(len(linear_mae), 0)
 plt.savefig("./figures/coef_over_dataset.png")
 
 
-""" # Print MAEs (R^2 not accessible as val set size is 1)
-print("Linear Regression : mean absolute error = ", mae_linear)
+# Print MAEs (R^2 not accessible as val set size is 1)
+""" print("Linear Regression : mean absolute error = ", mae_linear)
 print("Lasso Regression with alpha = {}".format(alpha_lasso),  ": mean absolute error = ", mae_lasso)
 print("Ridge Regression with alpha = {}".format(alpha_ridge), ": mean absolute error = ", mae_ridge)
 print("Support Vector Regression : mean absolute error = ", mae_svr)
 print("Support Vector Classifier : f1 score = ", f1_svc)
- """
-""" evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/models/no_frequency{}/linear_regression_{}.png".format(rm_freq, antigen), title=mae_linear)
-evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/models/no_frequency{}/lasso_regression_{}.png".format(rm_freq, antigen), title=mae_lasso)
-evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/models/no_frequency{}/ridge_regression_{}.png".format(rm_freq, antigen), title=mae_ridge)
-evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/models/no_frequency{}/support_vector_regression_{}.png".format(rm_freq, antigen), title=mae_svr)
 
-evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/models/no_frequency{}/linear_regression_confusion_matrix_{}.png".format(rm_freq, antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/models/no_frequency{}/lasso_regression_confusion_matrix_{}.png".format(rm_freq, antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/models/no_frequency{}/ridge_regression_confusion_matrix_{}.png".format(rm_freq, antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/models/no_frequency{}/sv_regression_confusion_matrix_{}.png".format(rm_freq, antigen))
-evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/models/no_frequency{}/sv_classifier_confusion_matrix_{}.png".format(rm_freq, antigen), labels=True)
- """
+evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/models/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), title=mae_linear)
+evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/models/no_frequency{}/lasso_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), title=mae_lasso)
+evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/models/no_frequency{}/ridge_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), title=mae_ridge)
+evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/models/no_frequency{}/support_vector_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), title=mae_svr)
+
+evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/models/no_frequency{}/linear_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/models/no_frequency{}/lasso_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/models/no_frequency{}/ridge_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/models/no_frequency{}/sv_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/models/no_frequency{}/sv_classifier_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
+"""
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")
 pickle.dump(linear_mae, file)

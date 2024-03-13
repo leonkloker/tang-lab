@@ -23,3 +23,8 @@ Meeting 03/05/2024:
 * - Norm of coefficient vector vs amount of base datapoints in dataset 
 * - UMAP or visualization of datapoints for paper purposes
 
+Meeting 03/12/2024:
+* - Fix dataloading such that Patient ID and activation is used
+* - Rerun pipeline on new data
+- UMAP on 10 important single cell features in 2d or 3d
+- Share the Github
