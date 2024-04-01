@@ -14,15 +14,17 @@ def get_data(file, antigen="cd63+"):
     # Group by Baso population
     populations = df.groupby([antigen, 'patient_id'])
 
-    denominator = 100
+    # Set the denominator for the activation percentage
+    if "203" in antigen:
+        denominator = 1
+    else:
+        denominator = 100
 
     # Get activation percentage for each population
     y_raw = np.array(populations.mean().reset_index()[antigen]) / denominator
 
     samples = []
     for i, (_, population) in enumerate(populations):
-        if y_raw[i] > 1:
-            continue
         samples.append(population.iloc[:, :-2].to_numpy())
     return samples, y_raw
 
@@ -158,23 +160,33 @@ def bin(y, bins, verbose=False):
             print("{} samples with {} < y <= {}".format(np.sum(y == i+1), bins[i], bins[i+1]))
     return y
 
-# take a list of combined populations and return the marginal estimated pdf of each feature
+# take a list of populations and return the marginal estimated pdf of each feature
 # evaluated at the query points
-def get_marginal_distributions(features_list, query_points, method='kde'):
+def get_marginal_distributions(features_list, query_points, method='kde'):    
     results = []
-    n_features = features_list[0].shape[1]
+    n_features = len(features_list[0][0])
 
     for features in features_list:
         feature_distributions = []
+        features = np.array(features)
         
         for i in range(n_features):
             data = features[:, i]
             kde = scipy.stats.gaussian_kde(data)
             evaluated = kde.evaluate(query_points[i])
-            feature_distributions.append(evaluated)
+            feature_distributions = feature_distributions + list(evaluated)
 
         results.append(np.array(feature_distributions))
-    return results
+    return np.array(results)
+
+# takes a list of populations, finds mean and std of each feature across all populations 
+# and returns n_points equidistant query points up to n_std standard deviations around the mean
+def get_query_points_marginal(features_list, n_points=20, n_std=2):
+    features_single_cell = np.array([feature for features in features_list for feature in features])
+    mean = np.mean(features_single_cell, axis=0)
+    std = np.std(features_single_cell, axis=0)
+    query_points = np.transpose(np.linspace(mean - n_std*std, mean + n_std*std, n_points))
+    return query_points
 
 # Save the features and the activation rates to a file
 def save_data(file, x, y, combinations=False):
@@ -196,10 +208,20 @@ def load_data(file, combinations=False):
             return x, y
 
 if __name__ == "__main__":
-    antigen = "cd203c_norm"
+    antigen = "cd203c_MFI"
     file = './data/bat_ifc.csv'
     samples, y = get_data(file, antigen=antigen)
     samples = add_opacity(samples)
-    print(y)
-    save_data('./data/{}_populations_{}.pickle'.format(len(y), antigen), samples, y, combinations=False)
 
+    """ query_points = get_query_points_marginal(samples)
+    features = get_marginal_distributions(samples, query_points=query_points)
+    print(features[0].shape)
+    plt.figure()
+    for i in range(17):
+        plt.plot(features[0][i*20:(i+1)*20])
+    plt.show() """
+    """ plt.figure()
+    plt.plot(features[0][:20])
+    plt.show() """
+
+    #save_data('./data/{}_populations_{}.pickle'.format(len(y), antigen), samples, y, combinations=False)

@@ -10,13 +10,12 @@ import matplotlib.pyplot as plt
 def plot_prediction(y, y_pred, savepath, title=None):
     plt.figure()
     plt.scatter(y, y_pred, label='MAE: {}'.format(title))
-    plt.scatter(y, y, marker='x', color='red')
+    plt.scatter(y, y, marker='.', color='red')
     plt.legend()
-    plt.plot([0, 1], [0, 1], color='red')
+    plt.plot([0, plt.gca().get_ylim()[1]], [0, plt.gca().get_ylim()[1]], color='red')
     plt.grid()
     plt.xlabel('Ground truth')
     plt.ylabel('Prediction')
-    plt.ylim(-0.2, 1.2)
     plt.savefig(savepath)
 
 # given the ground truth and the prediction,
@@ -25,7 +24,7 @@ def plot_confusion_matrix(y_true, y_pred, bins, savepath, labels=False):
     if not labels:
         y_pred = np.digitize(y_pred, bins=bins)
         y_true = np.digitize(y_true, bins=bins)
-    cm = confusion_matrix(y_true, y_pred)
+    cm = confusion_matrix(y_true, y_pred, labels=np.arange(1, len(bins)))
     
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     disp.plot(cmap=plt.cm.Blues)

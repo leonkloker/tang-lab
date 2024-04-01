@@ -27,4 +27,11 @@ Meeting 03/12/2024:
 * - Fix dataloading such that Patient ID and activation is used
 * - Rerun pipeline on new data
 - UMAP on 10 important single cell features in 2d or 3d
-- Share the Github
+* - Share the Github
+
+Meeting 03/19/2024:
+* - Fix cd203c normalization and bins
+* - Try marginal feature pdf as features for simple model
+* - Fix confusion matrix plot
+(- try subsampling approach: Sample n cells from a sample where n is always fixed and
+feed all the single-cell features into a model)
