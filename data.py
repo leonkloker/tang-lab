@@ -188,6 +188,19 @@ def get_query_points_marginal(features_list, n_points=20, n_std=2):
     query_points = np.transpose(np.linspace(mean - n_std*std, mean + n_std*std, n_points))
     return query_points
 
+def get_fixed_size_subsample(populations, y, size=200):
+    subsamples = []
+    y_subsamples = []
+    for x, y_ in zip(populations, y):
+        n = len(x)
+        if n < size:
+            continue
+        idx = np.random.choice(n, size, replace=False)
+        subsamples.append(np.array(x)[idx, :])
+        y_subsamples.append(y_)
+    return np.array(subsamples).reshape(len(subsamples), -1), y_subsamples
+
+
 # Save the features and the activation rates to a file
 def save_data(file, x, y, combinations=False):
     with open(file, 'wb') as f:

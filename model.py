@@ -48,7 +48,7 @@ x, y = zip(*xy)
 N = len(x)
 
 # Control the dataset size
-max_combs = 2**13
+max_combs = 2**10
 
 # Subsample the populations to get dataset
 x_train_mixy, y_train_mixy, x_test_mixy, y_test_mixy = data.subsample_populations_mixy(x, y, train_split=0.5, combine_train=True, combine_test=False, max_combs=max_combs)
@@ -86,10 +86,14 @@ print("Using features: ", ifc_features)
 x_test = data.get_statistical_moment_features(x_test_, features)[:, ifc_features]
  """
 # Get the marginal distribution features
-query_points = data.get_query_points_marginal(x_train_)
+query_points = data.get_query_points_marginal(x_train_, n_points=10)
 x_train = data.get_marginal_distributions(x_train_, query_points)
 x_test = data.get_marginal_distributions(x_test_, query_points)
 
+# Get the subsampled cell population as features
+""" x_train, y_train = data.get_fixed_size_subsample(x_train_, y_train, size=10)
+x_test, y_test = data.get_fixed_size_subsample(x_test_, y_test, size=10)
+ """
 # PCA of feature matrix, use coefficients as feature
 coef = np.array([])
 if len(coef) > 0:
@@ -173,7 +177,7 @@ print("Ridge Regression with alpha = {}".format(alpha_ridge), ": mean absolute e
 print("Support Vector Regression : mean absolute error = ", mae_svr)
 print("Support Vector Classifier : f1 score = ", f1_svc)
 
-evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), title=mae_linear)
+""" evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), title=mae_linear)
 evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/pdf_features/no_frequency{}/lasso_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), title=mae_lasso)
 evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/pdf_features/no_frequency{}/ridge_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), title=mae_ridge)
 evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/pdf_features/no_frequency{}/support_vector_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), title=mae_svr)
@@ -183,6 +187,7 @@ evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/pdf_
 evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/pdf_features/no_frequency{}/ridge_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/pdf_features/no_frequency{}/sv_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/pdf_features/no_frequency{}/sv_classifier_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
+ """
 
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")
