@@ -26,12 +26,24 @@ Meeting 03/05/2024:
 Meeting 03/12/2024:
 * - Fix dataloading such that Patient ID and activation is used
 * - Rerun pipeline on new data
-- UMAP on 10 important single cell features in 2d or 3d
+* - UMAP on 10 important single cell features in 2d or 3d
 * - Share the Github
 
 Meeting 03/19/2024:
 * - Fix cd203c normalization and bins
 * - Try marginal feature pdf as features for simple model
 * - Fix confusion matrix plot
-(- try subsampling approach: Sample n cells from a sample where n is always fixed and
-feed all the single-cell features into a model)
+* - try subsampling approach: Sample n cells from a sample where n is always fixed and
+feed all the single-cell features into a model
+
+Meeting 04/02/2024:
+* - cut out test set with size 7 from same date / patient such that no overlap to train/dev set
+* - plot pdf performance over amount of sample points / sample range
+* - tweak hyperparameters using dev set (cut out certain frequencies completely for example and others)
+* - include date of experiment in regression plots (colors of scatter)
+
+Meeting 04/09/2024:
+* - cd203_dMFI*
+* - optimize for range of sampling as well
+- UMAP for feature visualization of pdf features
+

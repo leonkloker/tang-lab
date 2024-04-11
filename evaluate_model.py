@@ -7,9 +7,12 @@ import matplotlib.pyplot as plt
 
 # given the ground truth and the prediction, 
 # plot the ground truth vs the prediction and save the plot
-def plot_prediction(y, y_pred, savepath, title=None):
+def plot_prediction(y, y_pred, savepath, title=None, classes=None):
     plt.figure()
-    plt.scatter(y, y_pred, label='MAE: {}'.format(title))
+    if classes != None:
+        plt.scatter(y, y_pred, c=classes, label='MAE: {}'.format(title))
+    else:
+        plt.scatter(y, y_pred, label='MAE: {}'.format(title))
     plt.scatter(y, y, marker='.', color='red')
     plt.legend()
     plt.plot([0, plt.gca().get_ylim()[1]], [0, plt.gca().get_ylim()[1]], color='red')

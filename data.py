@@ -22,11 +22,12 @@ def get_data(file, antigen="cd63+"):
 
     # Get activation percentage for each population
     y_raw = np.array(populations.mean().reset_index()[antigen]) / denominator
+    patient_ids = np.array(populations.mean().reset_index()['patient_id'])
 
     samples = []
     for i, (_, population) in enumerate(populations):
         samples.append(population.iloc[:, :-2].to_numpy())
-    return samples, y_raw
+    return samples, y_raw, patient_ids
 
 # Add the opacity to the populations and return the populations
 def add_opacity(populations):
@@ -202,29 +203,66 @@ def get_fixed_size_subsample(populations, y, size=200):
 
 
 # Save the features and the activation rates to a file
-def save_data(file, x, y, combinations=False):
+def save_data(file, x, y, patient_id=False, combinations=False):
     with open(file, 'wb') as f:
         pickle.dump(x, f)
         pickle.dump(y, f)
+        if patient_id:
+            pickle.dump(patient_id, f)
         if combinations:
             pickle.dump(combinations, f)
 
 # Load the features and the activation rates from a file
-def load_data(file, combinations=False):
+def load_data(file, patient_id=False, combinations=False):
     with open(file, 'rb') as f:
         x = pickle.load(f)
         y = pickle.load(f)
+        if patient_id:
+            patient_id = pickle.load(f)
+            return x, y, patient_id
         if combinations:
             combinations = pickle.load(f)
             return x, y, combinations
         else:
             return x, y
+        
+def create_dataset(antigen):
+    # load data
+    file = './data/bat_ifc.csv'
+    samples, y, patient_id = get_data(file, antigen=antigen)
+
+    # create patient classes
+    dic = {}
+    for i, patient in enumerate(set(patient_id)):
+        dic[patient] = i
+    patient_c = [dic[patient] for patient in patient_id]
+
+    # add opacity to the populations
+    samples = add_opacity(samples)
+
+    # train/val patients
+    train_val_patients = ['SBC40', 'SBC41', 'SBC10', 'SBC24', 'SBC45', 'SBC37', 'SBC41-B']
+
+    # split data into train/val and test
+    test_idx = [i for i in range(len(patient_id)) if not patient_id[i] in train_val_patients]
+    train_idx = [i for i in range(len(patient_id)) if patient_id[i] in train_val_patients]
+
+    x_train = [samples[i] for i in train_idx]
+    y_train = [y[i] for i in train_idx]
+    id_train = [patient_c[i] for i in train_idx]
+
+    x_test = [samples[i] for i in test_idx]
+    y_test = [y[i] for i in test_idx]
+    id_test = [patient_c[i] for i in test_idx]
+
+    print(y_test, y_train)
+
+    save_data('./data/{}_populations_train_val_{}.pickle'.format(len(y_train), antigen), x_train, y_train, patient_id=id_train, combinations=False)
+    save_data('./data/{}_populations_test_{}.pickle'.format(len(y_test), antigen), x_test, y_test, patient_id=id_test, combinations=False)
 
 if __name__ == "__main__":
-    antigen = "cd203c_MFI"
-    file = './data/bat_ifc.csv'
-    samples, y = get_data(file, antigen=antigen)
-    samples = add_opacity(samples)
+    antigen = "cd203c_dMFI*"
+    create_dataset(antigen)
 
     """ query_points = get_query_points_marginal(samples)
     features = get_marginal_distributions(samples, query_points=query_points)
@@ -236,5 +274,3 @@ if __name__ == "__main__":
     """ plt.figure()
     plt.plot(features[0][:20])
     plt.show() """
-
-    #save_data('./data/{}_populations_{}.pickle'.format(len(y), antigen), samples, y, combinations=False)
