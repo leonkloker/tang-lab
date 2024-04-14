@@ -35,7 +35,7 @@ def train_model(pipeline, train, test, classification=False, weights=None, antig
     return pipeline, y_pred, metric
 
 # Read in the base populations
-antigen = "cd63" #cd63 avidin cd203c_dMFI*
+antigen = "cd203c_dMFI*" #cd63 avidin cd203c_dMFI*
 file = './data/20_populations_train_val_{}.pickle'.format(antigen)
 x, y, patients = data.load_data(file, patient_id=True)
 
@@ -62,7 +62,7 @@ y_test = y_test_mixy
 features = ["mean"] #, "std", "skew", "kurt"]
 
 # Define which frequencies to remove
-rm_freqs = []
+rm_freqs = [2, 5]
 
 # Baseline features for best performing model
 ifc_features_baseline = np.array([0,6,7,8,9,10,11,13,14,16])
@@ -115,7 +115,7 @@ weights = np.where(np.array(y_train) <= 0.1, w, 1)
 
 # Bin labels for classification
 if "203" in antigen:
-    bins = np.linspace(0, max(y_train), 5)
+    bins = np.linspace(0, max(y_train)*1.01, 5)
 else:
     bins = [0., 0.05, 0.20, 0.50, 1.]
 y_train_binned = data.bin(y_train, bins, verbose=True)
@@ -200,7 +200,7 @@ plt.grid()
 plt.savefig("./figures/{}_f1_over_points.png".format(antigen))
  """
 
-""" evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), classes=patients, title=mae_linear)
+evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), classes=patients, title=mae_linear)
 evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/pdf_features/no_frequency{}/lasso_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_lasso)
 evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/pdf_features/no_frequency{}/ridge_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_ridge)
 evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/pdf_features/no_frequency{}/support_vector_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_svr)
@@ -210,7 +210,7 @@ evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/pdf_
 evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/pdf_features/no_frequency{}/ridge_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/pdf_features/no_frequency{}/sv_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/pdf_features/no_frequency{}/sv_classifier_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
- """
+
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")
 pickle.dump(linear_mae, file)
