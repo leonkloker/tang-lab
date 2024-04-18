@@ -45,5 +45,14 @@ Meeting 04/02/2024:
 Meeting 04/09/2024:
 * - cd203_dMFI*
 * - optimize for range of sampling as well
-- UMAP for feature visualization of pdf features
+* - UMAP for feature visualization of pdf features
 
+Meeting 04/17/2024:
+- Calculate Pearson correlation coefficient using Lasso for all 4 biomarkers
+- Ablation plot for features (remove single feature) on validation set
+- Sampling points and sampling range plot when all features are used on validation set
+- Start writing methods (connect with Sungu's writeup to fit the style)
+
+- Build a simple FNN to binary predict the activation of a single cell based on its 17 flow cytometry features
+, then optimize the model using the activation rate of the entire population
+- Unsupervised using kmeans with 2 clusters initially

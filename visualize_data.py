@@ -86,7 +86,7 @@ umap_data = reducer.fit_transform(x)
 # plot 3d
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
-scatter = ax.scatter(umap_data[:, 0], umap_data[:, 1], umap_data[:, 2], cmap='plasma', s=20, c=y, alpha=0.4)
+scatter = ax.scatter(umap_data[:, 0], umap_data[:, 1], umap_data[:, 2], cmap='plasma', s=15, c=y, alpha=0.4)
 ax.set_title('3D UMAP')
 colorbar = fig.colorbar(scatter, ax=ax, shrink=0.5, aspect=5)
 colorbar.set_label('Color scale label', rotation=270, labelpad=20)
