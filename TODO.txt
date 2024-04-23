@@ -48,9 +48,50 @@ Meeting 04/09/2024:
 * - UMAP for feature visualization of pdf features
 
 Meeting 04/17/2024:
-- Calculate Pearson correlation coefficient using Lasso for all 4 biomarkers
-- Ablation plot for features (remove single feature) on validation set
-- Sampling points and sampling range plot when all features are used on validation set
+- Calculate validation Pearson correlation coefficient for all 4 biomarkers:
+
+Best features (0,6,7,8,9,10,11,13,14,16):
+    Pearson:                                
+            cd63    avidin    cd203c_dMFI*
+    linear  .975    .993      .988
+    lasso   .981    .990      .987
+    ridge   .980    .993      .990
+    svr     .985    .941      .990
+
+    MAE / F1:
+            cd63    avidin    cd203c_dMFI*
+    linear  .0595   .0142     .3450
+    lasso   .0531   .0171     .3773
+    ridge   .0558   .0150     .3023
+    svr     .0494   .0568     .2916
+    svm     1.0     .847      1.0
+
+Frequency 2 and 5 removed (0,6,8,9,11,13,14,16):
+    Pearson:                                
+            cd63    avidin    cd203c_dMFI*
+    linear  .981    .993      .989
+    lasso   .974    .983      .985
+    ridge   .982    .992      .990
+    svr     .978    .931      .990
+
+    MAE / F1:
+            cd63    avidin    cd203c_dMFI*
+    linear  .0566   .0153     .4069
+    lasso   .0535   .0210     .4874
+    ridge   .0560   .0172     .3964
+    svr     .0541   .0501     .3773
+    svm     1.0     .849      1.0
+
+- Ablation plot for features (remove single feature) on validation set:
+The ablation plot when removing just one of the 17 features doesn't correspond to improved performance when 
+multiple features that are deemed unimportant are removed. When combinations of features are removed,
+the "old" best feature set still performs better than anything derived from ablation plots.
+--> What to do for ablation plots (can't really include plots of all possible combinations of removed features)
+
+- First plot - optimizing for sampling range using 20 equidistant sample points
+
+- Second plot - optimizing for the amount of sampling points
+
 - Start writing methods (connect with Sungu's writeup to fit the style)
 
 - Build a simple FNN to binary predict the activation of a single cell based on its 17 flow cytometry features
