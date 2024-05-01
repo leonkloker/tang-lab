@@ -37,7 +37,7 @@ def train_model(pipeline, train, test, classification=False, weights=None, antig
     return pipeline, y_pred, metric
 
 # Read in the base populations
-antigen = "avidin" #cd63 avidin cd203c_dMFI*
+antigen = "cd63" #cd63 avidin cd203c_dMFI*
 file = './data/20_populations_train_val_{}.pickle'.format(antigen)
 x, y, patients = data.load_data(file, patient_id=True)
 
@@ -68,11 +68,11 @@ features = ["mean"] #, "std", "skew", "kurt"]
 x_test_ = data.get_statistical_moment_features(x_test_, features)
  """
 
-# Get the marginal d1istribution features
-n_points = 20
+# Get the marginal distribution features
+n_points = 20   
 query_points = data.get_query_points_marginal(x_train_, n_points=n_points, n_std=2)
-x_train_ = data.get_marginal_distributions(x_train_, query_points)
-x_test_ = data.get_marginal_distributions(x_test_, query_points)
+x_train = data.get_marginal_distributions(x_train_, query_points)
+x_test = data.get_marginal_distributions(x_test_, query_points)
 
 # Get the subsampled cell population as features
 """ x_train_, y_train = data.get_fixed_size_subsample(x_train_, y_train, size=10)
@@ -102,7 +102,7 @@ else:
     bins = [0., 0.05, 0.20, 0.50, 1.]
 y_train_binned = data.bin(y_train, bins, verbose=True)
 y_test_binned = data.bin(y_test, bins)
-
+   
 # Define which frequencies to remove
 rm_freqs = []
 
@@ -123,33 +123,47 @@ print("Using features: ", ifc_features)
 feature_idx = []
 for feat in ifc_features:
     feature_idx = feature_idx + list(np.arange(feat * n_points, (feat + 1) * n_points, dtype=int))
+x_train = x_train[:,feature_idx]
+x_test = x_test[:,feature_idx]
 
-x_train = x_train_[:,feature_idx]
-x_test = x_test_[:,feature_idx]
+mae_ridge_list = []
+r_ridge_list = []
 
-# Define models
-alpha_lasso = 0.001
-alpha_ridge = 1.0
-linear = sklin.LinearRegression()
-lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
-ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
-svr = SVR(kernel='linear')
-svc = SVC(kernel='linear')
+for alpha_ridge in np.logspace(-3, 2, 60):
+    # Define models
+    alpha_lasso = 0.001
+    #alpha_ridge = 1.0
+    linear = sklin.LinearRegression()
+    lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
+    ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
+    svr = SVR(kernel='linear')
+    svc = SVC(kernel='linear')
 
-# Define pipelines
-scaler = StandardScaler()
-linear_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', linear)])
-lasso_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', lasso)])
-ridge_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', ridge)])
-svr_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svr)])
-svc_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svc)])
+    # Define pipelines
+    scaler = StandardScaler()
+    linear_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', linear)])
+    lasso_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', lasso)])
+    ridge_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', ridge)])
+    svr_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svr)])
+    svc_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svc)])
 
-# Train and validate models
-linear_pipeline, y_pred_linear, (mae_linear, pearson_linear) = train_model(linear_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-lasso_pipeline, y_pred_lasso, (mae_lasso, pearson_lasso) = train_model(lasso_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-ridge_pipeline, y_pred_ridge, (mae_ridge, pearson_ridge) = train_model(ridge_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-svr_pipeline, y_pred_svr, (mae_svr, pearson_svr) = train_model(svr_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-svc_pipeline, y_pred_svc, (f1_svc) = train_model(svc_pipeline, (x_train, y_train_binned), (x_test, y_test_binned), classification=True, weights=weights, antigen=antigen)
+    # Train and validate models
+    linear_pipeline, y_pred_linear, (mae_linear, pearson_linear) = train_model(linear_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    lasso_pipeline, y_pred_lasso, (mae_lasso, pearson_lasso) = train_model(lasso_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    ridge_pipeline, y_pred_ridge, (mae_ridge, pearson_ridge) = train_model(ridge_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    svr_pipeline, y_pred_svr, (mae_svr, pearson_svr) = train_model(svr_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    svc_pipeline, y_pred_svc, (f1_svc) = train_model(svc_pipeline, (x_train, y_train_binned), (x_test, y_test_binned), classification=True, weights=weights, antigen=antigen)
+
+    mae_ridge_list.append(mae_ridge)
+    r_ridge_list.append(pearson_ridge)
+    print(alpha_ridge)
+
+res = {
+    "mae_ridge": mae_ridge_list,
+    "r_ridge": r_ridge_list,
+}
+
+pickle.dump(res, open("./results/pdf_ridge_regularization_ablation_{}.pickle".format(antigen), "wb"))
 
 """ plt.figure()
 plt.plot(np.arange(len(linear_mae), 0, -1), linear_mae, label="Linear Regression")
@@ -177,7 +191,7 @@ plt.grid()
 plt.xlim(len(linear_mae), 0)
 plt.savefig("./figures/coef_over_dataset.png") """
 
-# Print MAEs (R^2 not accessible as val set size is 1)
+# Print metrics
 print("Linear Regression : mean absolute error = ", mae_linear, ", Pearson correlation = ", pearson_linear)
 print("Lasso Regression with alpha = {}".format(alpha_lasso),  ": mean absolute error = ", mae_lasso, ", Pearson correlation = ", pearson_lasso)
 print("Ridge Regression with alpha = {}".format(alpha_ridge), ": mean absolute error = ", mae_ridge, ", Pearson correlation = ", pearson_ridge)
@@ -225,4 +239,3 @@ pickle.dump(ridge_mae, file)
 pickle.dump(svr_mae, file)
 file.close()
  """
-

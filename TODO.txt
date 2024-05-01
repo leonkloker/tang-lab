@@ -50,6 +50,22 @@ Meeting 04/09/2024:
 Meeting 04/17/2024:
 - Calculate validation Pearson correlation coefficient for all 4 biomarkers:
 
+All features (0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16):
+    Pearson:                                
+            cd63    avidin    cd203c_dMFI*
+    linear  
+    lasso   
+    ridge   
+    svr     
+
+    MAE / F1:
+            cd63    avidin    cd203c_dMFI*
+    linear  
+    lasso   
+    ridge   
+    svr     
+    svm     
+
 Best features (0,6,7,8,9,10,11,13,14,16):
     Pearson:                                
             cd63    avidin    cd203c_dMFI*
@@ -94,6 +110,20 @@ the "old" best feature set still performs better than anything derived from abla
 
 - Start writing methods (connect with Sungu's writeup to fit the style)
 
-- Build a simple FNN to binary predict the activation of a single cell based on its 17 flow cytometry features
+(- Build a simple FNN to binary predict the activation of a single cell based on its 17 flow cytometry features
 , then optimize the model using the activation rate of the entire population
-- Unsupervised using kmeans with 2 clusters initially
+- Unsupervised using kmeans with 2 clusters initially)
+
+Meeting 04/23/2024:
+- Write methods section!
+* - Create proper ablation plots for removing one frequency at a time, removing 2 frequencies at a time,
+varying the sampling range, varying the sampling points (all with ridge regression and MAE or R),
+varying the regularization parameter of ridge regression
+* - Create a sample plot of the estimated marginal probability densities and the sampling range and points for
+some exemplary IFC features
+- Put the plots into the powerpoint presentation
+- Ask Chienyi for support / supervision for methods section as well as the powerpoint plots
+
+Meeting 04/30/2024:
+- 
+
