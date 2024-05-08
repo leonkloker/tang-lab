@@ -125,5 +125,17 @@ some exemplary IFC features
 - Ask Chienyi for support / supervision for methods section as well as the powerpoint plots
 
 Meeting 04/30/2024:
-- 
+- Update labels of plots to Pearson coefficient instead of R
+- Use all antiIge stimulated samples as train and validation and allergen as test once ready
+- Put plots into PowerPoint and create storyline for them
+- Create SVM confusion plot and overall best result table
+
+Meeting 05/07/2024:
+- Update labels of plots to Pearson coefficient instead of R
+- Use all antiIge stimulated samples as train and validation and create all plots in a clean fashion
+(save the plotting scripts such that everything is ready once the test data arrives)
+- Larger labels and prettier uniform plots when it comes to colorcoding
+- Dump all the nice figures in the powerpoint (for all biomarkers and potentially all models)
+- Make confusion matrix rows sum up to 1 in order to "hide" bad data distribution
+
 

@@ -38,7 +38,7 @@ def train_model(pipeline, train, test, classification=False, weights=None, antig
 
 # Read in the base populations
 antigen = "cd63" #cd63 avidin cd203c_dMFI*
-file = './data/20_populations_train_val_{}.pickle'.format(antigen)
+file = './data/41_populations_{}.pickle'.format(antigen)
 x, y, patients = data.load_data(file, patient_id=True)
 
 # Shuffle the data
@@ -52,6 +52,7 @@ N = len(x)
 # Control the dataset size
 max_combs = 2**11
 
+print("Combining the training populations...")
 # Subsample the populations to get dataset
 x_train_mixy, y_train_mixy, x_test_mixy, y_test_mixy = data.subsample_populations_mixy(x, y, train_split=0.5, combine_train=True, combine_test=False, max_combs=max_combs)
 x_train_consty, y_train_consty, x_test_consty, y_test_consty = data.subsample_populations_consty(x, y, train_split=0.6, sample_size=0.8, combs_per_sample=int(max_combs/len(x)))
@@ -60,35 +61,12 @@ y_train = [*y_train_mixy, *y_train_consty]
 x_test_ = x_test_mixy
 y_test = y_test_mixy
 
-# Define statistical moment features
-features = ["mean"] #, "std", "skew", "kurt"]
-
-# Get the features staistical moment features
-""" x_train_ = data.get_statistical_moment_features(x_train_, features)
-x_test_ = data.get_statistical_moment_features(x_test_, features)
- """
-
+print("Estimating the marginal distributions...")
 # Get the marginal distribution features
 n_points = 20   
 query_points = data.get_query_points_marginal(x_train_, n_points=n_points, n_std=2)
 x_train = data.get_marginal_distributions(x_train_, query_points)
 x_test = data.get_marginal_distributions(x_test_, query_points)
-
-# Get the subsampled cell population as features
-""" x_train_, y_train = data.get_fixed_size_subsample(x_train_, y_train, size=10)
-x_test_, y_test = data.get_fixed_size_subsample(x_test_, y_test, size=10)
-"""
-
-# PCA of feature matrix, use coefficients as feature
-coef = np.array([])
-if len(coef) > 0:
-    U, S, V = np.linalg.svd(x_train_.T, full_matrices=False)
-    pca_features_train = V[coef,:].T
-    pca_features_test = (np.diag(1/S) @ U.T @ x_test_.T)[coef,:].T
-
-    # Add PCA features to the dataset
-    x_train = np.column_stack((x_train_, pca_features_train))
-    x_test = np.column_stack((x_test_, pca_features_test))
 
 # Weight the samples differently depending on activation
 w = 1
@@ -126,44 +104,36 @@ for feat in ifc_features:
 x_train = x_train[:,feature_idx]
 x_test = x_test[:,feature_idx]
 
-mae_ridge_list = []
-r_ridge_list = []
+# Define models
+alpha_lasso = 0.001
+alpha_ridge = 2.0
+linear = sklin.LinearRegression()
+lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
+ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
+svr = SVR(kernel='linear')
+svc = SVC(kernel='linear')
 
-for alpha_ridge in np.logspace(-3, 2, 60):
-    # Define models
-    alpha_lasso = 0.001
-    #alpha_ridge = 1.0
-    linear = sklin.LinearRegression()
-    lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
-    ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
-    svr = SVR(kernel='linear')
-    svc = SVC(kernel='linear')
+# Define pipelines
+scaler = StandardScaler()
+linear_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', linear)])
+lasso_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', lasso)])
+ridge_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', ridge)])
+svr_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svr)])
+svc_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svc)])
 
-    # Define pipelines
-    scaler = StandardScaler()
-    linear_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', linear)])
-    lasso_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', lasso)])
-    ridge_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', ridge)])
-    svr_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svr)])
-    svc_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svc)])
+# Train and validate models
+linear_pipeline, y_pred_linear, (mae_linear, pearson_linear) = train_model(linear_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+lasso_pipeline, y_pred_lasso, (mae_lasso, pearson_lasso) = train_model(lasso_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+ridge_pipeline, y_pred_ridge, (mae_ridge, pearson_ridge) = train_model(ridge_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+svr_pipeline, y_pred_svr, (mae_svr, pearson_svr) = train_model(svr_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+svc_pipeline, y_pred_svc, (f1_svc) = train_model(svc_pipeline, (x_train, y_train_binned), (x_test, y_test_binned), classification=True, weights=weights, antigen=antigen)
 
-    # Train and validate models
-    linear_pipeline, y_pred_linear, (mae_linear, pearson_linear) = train_model(linear_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-    lasso_pipeline, y_pred_lasso, (mae_lasso, pearson_lasso) = train_model(lasso_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-    ridge_pipeline, y_pred_ridge, (mae_ridge, pearson_ridge) = train_model(ridge_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-    svr_pipeline, y_pred_svr, (mae_svr, pearson_svr) = train_model(svr_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-    svc_pipeline, y_pred_svc, (f1_svc) = train_model(svc_pipeline, (x_train, y_train_binned), (x_test, y_test_binned), classification=True, weights=weights, antigen=antigen)
-
-    mae_ridge_list.append(mae_ridge)
-    r_ridge_list.append(pearson_ridge)
-    print(alpha_ridge)
-
-res = {
+""" res = {
     "mae_ridge": mae_ridge_list,
     "r_ridge": r_ridge_list,
-}
+} """
 
-pickle.dump(res, open("./results/pdf_ridge_regularization_ablation_{}.pickle".format(antigen), "wb"))
+#pickle.dump(res, open("./results/pdf_ridge_regularization_ablation_{}.pickle".format(antigen), "wb"))
 
 """ plt.figure()
 plt.plot(np.arange(len(linear_mae), 0, -1), linear_mae, label="Linear Regression")
@@ -220,7 +190,7 @@ plt.grid()
 plt.savefig("./figures/{}_f1_over_points.png".format(antigen))
  """
 
-""" evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), classes=patients, title=mae_linear)
+evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), classes=patients, title=mae_linear)
 evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/pdf_features/no_frequency{}/lasso_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_lasso)
 evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/pdf_features/no_frequency{}/ridge_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_ridge)
 evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/pdf_features/no_frequency{}/support_vector_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_svr)
@@ -230,7 +200,7 @@ evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/pdf_
 evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/pdf_features/no_frequency{}/ridge_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/pdf_features/no_frequency{}/sv_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
 evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/pdf_features/no_frequency{}/sv_classifier_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
- """
+
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")
 pickle.dump(linear_mae, file)

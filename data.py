@@ -7,9 +7,12 @@ import sys
 import matplotlib.pyplot as plt
 
 # Read in data from a csv file and return the populations and the activation rates
-def get_data(file, antigen="cd63+"):
-    features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)] + [antigen] + ['patient_id']
+def get_data(file, antigen="cd63"):
+    features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)] + [antigen] + ['patient_id'] + ['date']
     df = pd.read_csv(file)[features]
+
+    df = df[df['date'] != '04/24/2024']
+    df = df.drop(columns=['date'])
 
     # Group by Baso population
     populations = df.groupby([antigen, 'patient_id'])
@@ -260,9 +263,24 @@ def create_dataset(antigen):
     save_data('./data/{}_populations_train_val_{}.pickle'.format(len(y_train), antigen), x_train, y_train, patient_id=id_train, combinations=False)
     save_data('./data/{}_populations_test_{}.pickle'.format(len(y_test), antigen), x_test, y_test, patient_id=id_test, combinations=False)
 
+def create_one_trainset(antigen):
+    file = './data/bat_ifc.csv'
+    samples, y, patient_id = get_data(file, antigen=antigen)
+
+    # create patient classes
+    dic = {}
+    for i, patient in enumerate(set(patient_id)):
+        dic[patient] = i
+    patient_c = [dic[patient] for patient in patient_id]
+
+    # add opacity to the populations
+    samples = add_opacity(samples)
+
+    save_data('./data/{}_filtered_populations_{}.pickle'.format(len(y), antigen), samples, y, patient_id=patient_c, combinations=False)
+
 if __name__ == "__main__":
     antigen = "cd203c_dMFI*"
-    create_dataset(antigen)
+    create_one_trainset(antigen)
 
     """ query_points = get_query_points_marginal(samples)
     features = get_marginal_distributions(samples, query_points=query_points)
