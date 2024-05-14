@@ -20,7 +20,7 @@ x, y = zip(*xy)
 N = len(x)
 
 # Control the dataset size
-max_combs = 2**10
+max_combs = 2**5
 
 # Subsample the populations to get dataset
 x_train_mixy, y_train_mixy, x_test_mixy, y_test_mixy = data.subsample_populations_mixy(x, y, train_split=0.5, combine_train=True, combine_test=False, max_combs=max_combs)
@@ -62,15 +62,16 @@ viridis = plt.get_cmap('viridis')
 colors = [viridis(i/10) for i in range(0,10,1)]
 
 plt.figure()
-plt.plot(query_points_plot[16,:], x[0,1600:1700], color=colors[1], label="Marginal pdf")
-plt.axvline(x=np.mean(query_points_plot[16, 49:51]), color=colors[5], linestyle='--', linewidth=2, label="Mean")
-plt.scatter(query_points[16,:], np.zeros(20), color=colors[8], s=10, zorder=5, label="Query points")
+plt.plot(query_points_plot[16,:], x[0,1600:1700], color=colors[1], label="Sample distribution", linewidth=2)
+plt.axvline(x=np.mean(query_points_plot[16, 49:51]), color=colors[5], linestyle='--', linewidth=2, label="Mean", zorder=10)
+plt.scatter(query_points[16,:], np.zeros(20), color=colors[8], s=40, label="Query points", marker='x')
 
 plt.grid(True, linestyle=':', linewidth=0.7)
-plt.xlabel('Opacity for frequency 6')
-plt.ylabel('Pdf')
+plt.xlabel('Opacity for frequency 6', fontsize=12)
+plt.ylabel('Probability density', fontsize=12)
 
-plt.legend()
+plt.legend(prop={'size': 12})
 plt.tight_layout()
-plt.savefig("figures/marginal_pdf_freq6_opacity.png", dpi=400)
+plt.show()
+#plt.savefig("figures/marginal_pdf_freq6_opacity.png", dpi=400)
 

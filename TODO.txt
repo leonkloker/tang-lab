@@ -131,11 +131,12 @@ Meeting 04/30/2024:
 - Create SVM confusion plot and overall best result table
 
 Meeting 05/07/2024:
-- Update labels of plots to Pearson coefficient instead of R
+* - Update labels of plots to Pearson coefficient instead of R
 - Use all antiIge stimulated samples as train and validation and create all plots in a clean fashion
 (save the plotting scripts such that everything is ready once the test data arrives)
 - Larger labels and prettier uniform plots when it comes to colorcoding
 - Dump all the nice figures in the powerpoint (for all biomarkers and potentially all models)
-- Make confusion matrix rows sum up to 1 in order to "hide" bad data distribution
+* - Make confusion matrix rows sum up to 1 in order to "hide" bad data distribution
+* - Don't use all 41 but only 36 samples 
 
 

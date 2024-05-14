@@ -50,7 +50,7 @@ x, y = zip(*xy)
 N = len(x)
 
 # Control the dataset size
-max_combs = 2**8
+max_combs = 2**13
 
 print("Combining the training populations...")
 # Subsample the populations to get dataset
@@ -90,7 +90,7 @@ ifc_features = []
 for feature in ifc_features_baseline:
     use = True
     for rm_freq in rm_freqs:
-        if feature == rm_freq-1 or feature == rm_freq+5 or (feature == rm_freq+10 and rm_freq != 1):
+        if feature == rm_freq-1 or feature == rm_freq+5 or feature == rm_freq+10:
             use = False
             break
     if use:
@@ -104,30 +104,60 @@ for feat in ifc_features:
 x_train = x_train_[:,feature_idx]
 x_test = x_test_[:,feature_idx]
 
-# Define models
-alpha_lasso = 0.001
-alpha_ridge = 2.0
-linear = sklin.LinearRegression()
-lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
-ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
-svr = SVR(kernel='linear')
-svc = SVC(kernel='linear')
+mae_ridge_list = []
+mae_lasso_list = []
+mae_linear_list = []
+mae_svr_list = []
+f1_svc_list = []
+r_ridge_list = []
+r_lasso_list = []
+r_linear_list = []
+r_svr_list = []
 
-# Define pipelines
-scaler = StandardScaler()
-linear_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', linear)])
-lasso_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', lasso)])
-ridge_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', ridge)])
-svr_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svr)])
-svc_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svc)])
+for alpha_ridge in np.logspace(-3, 2, 50):
 
-# Train and validate models
-linear_pipeline, y_pred_linear, (mae_linear, pearson_linear) = train_model(linear_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-lasso_pipeline, y_pred_lasso, (mae_lasso, pearson_lasso) = train_model(lasso_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-ridge_pipeline, y_pred_ridge, (mae_ridge, pearson_ridge) = train_model(ridge_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-svr_pipeline, y_pred_svr, (mae_svr, pearson_svr) = train_model(svr_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
-svc_pipeline, y_pred_svc, (f1_svc) = train_model(svc_pipeline, (x_train, y_train_binned), (x_test, y_test_binned), classification=True, weights=weights, antigen=antigen)
+    # Define models
+    alpha_lasso = 0.001
+    #alpha_ridge = 2.0
+    linear = sklin.LinearRegression()
+    lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
+    ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
+    svr = SVR(kernel='linear')
+    svc = SVC(kernel='linear')
 
+    # Define pipelines
+    scaler = StandardScaler()
+    linear_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', linear)])
+    lasso_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', lasso)])
+    ridge_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', ridge)])
+    svr_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svr)])
+    svc_pipeline = sklearn.pipeline.Pipeline(steps=[('scaler', scaler), ('model', svc)])
+
+    # Train and validate models
+    linear_pipeline, y_pred_linear, (mae_linear, pearson_linear) = train_model(linear_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    lasso_pipeline, y_pred_lasso, (mae_lasso, pearson_lasso) = train_model(lasso_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    ridge_pipeline, y_pred_ridge, (mae_ridge, pearson_ridge) = train_model(ridge_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    svr_pipeline, y_pred_svr, (mae_svr, pearson_svr) = train_model(svr_pipeline, (x_train, y_train), (x_test, y_test), weights=weights, antigen=antigen)
+    svc_pipeline, y_pred_svc, (f1_svc) = train_model(svc_pipeline, (x_train, y_train_binned), (x_test, y_test_binned), classification=True, weights=weights, antigen=antigen)
+
+    # Store the results
+    mae_linear_list.append(mae_linear)
+    mae_lasso_list.append(mae_lasso)
+    mae_ridge_list.append(mae_ridge)
+    mae_svr_list.append(mae_svr)
+    f1_svc_list.append(f1_svc)
+    r_linear_list.append(pearson_linear)
+    r_lasso_list.append(pearson_lasso)
+    r_ridge_list.append(pearson_ridge)
+    r_svr_list.append(pearson_svr)
+
+
+res = {
+    "mae_ridge": mae_ridge_list,
+    "r_ridge": r_ridge_list,
+}
+
+pickle.dump(res, open("./results/pdf_ridge_regularization_ablation_{}.pickle".format(antigen), "wb"))
 
 """ plt.figure()
 plt.plot(np.arange(len(linear_mae), 0, -1), linear_mae, label="Linear Regression")
@@ -184,17 +214,17 @@ plt.grid()
 plt.savefig("./figures/{}_f1_over_points.png".format(antigen))
  """
 
-evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/final_model/linear_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]), antigen))
-evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/pdf_features/final_model/lasso_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/pdf_features/final_model/ridge_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/pdf_features/final_model/support_vector_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+""" evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/no_frequency{}/linear_regression_{}.png".format("".join([str(n) for n in rm_freqs]), antigen), classes=patients, title=mae_linear)
+evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/pdf_features/no_frequency{}/lasso_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_lasso)
+evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/pdf_features/no_frequency{}/ridge_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_ridge)
+evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/pdf_features/no_frequency{}/support_vector_regression_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), classes=patients, title=mae_svr)
 
-evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/pdf_features/final_model/linear_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/pdf_features/final_model/lasso_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/pdf_features/final_model/ridge_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/pdf_features/final_model/sv_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/pdf_features/final_model/sv_classifier_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
-
+evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/pdf_features/no_frequency{}/linear_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/pdf_features/no_frequency{}/lasso_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/pdf_features/no_frequency{}/ridge_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/pdf_features/no_frequency{}/sv_regression_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/pdf_features/no_frequency{}/sv_classifier_confusion_matrix_{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
+ """
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")
 pickle.dump(linear_mae, file)
