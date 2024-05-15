@@ -37,7 +37,7 @@ def train_model(pipeline, train, test, classification=False, weights=None, antig
     return pipeline, y_pred, metric
 
 # Read in the base populations
-antigen = "cd63" #cd63 avidin cd203c_dMFI*
+antigen = "cd203c_dMFI*" #cd63 avidin cd203c_dMFI*
 file = './data/36_filtered_populations_{}.pickle'.format(antigen)
 x, y, patients = data.load_data(file, patient_id=True)
 
@@ -50,7 +50,7 @@ x, y = zip(*xy)
 N = len(x)
 
 # Control the dataset size
-max_combs = 2**8
+max_combs = 2**14
 
 print("Combining the training populations...")
 # Subsample the populations to get dataset
@@ -86,6 +86,7 @@ rm_freqs = []
 
 # Baseline features for best performing model
 ifc_features_baseline = np.array([0,6,7,8,9,10,11,13,14,16])
+ifc_features_baseline = np.array([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16])
 ifc_features = []
 for feature in ifc_features_baseline:
     use = True
@@ -140,7 +141,7 @@ plt.ylabel("Mean absolute error")
 plt.title("Model performance as a function of dataset size")
 plt.grid()
 plt.xlim(len(linear_mae), 0)
-plt.savefig("./figures/mae_over_dataset.png")
+plt.savefig("./figures/mae_over_dataset.pdf")
 
 plt.figure()
 plt.plot(np.arange(len(linear_mae), 0, -1), linear_coef, label="Linear Regression")
@@ -153,7 +154,7 @@ plt.ylabel("L2 norm of coefficients")
 plt.title("Model complexity as a function of dataset size")
 plt.grid()
 plt.xlim(len(linear_mae), 0)
-plt.savefig("./figures/coef_over_dataset.png") """
+plt.savefig("./figures/coef_over_dataset.pdf") """
 
 # Print metrics
 print("Linear Regression : mean absolute error = ", mae_linear, ", Pearson correlation = ", pearson_linear)
@@ -172,7 +173,7 @@ plt.xlabel("Number of points per marginal distribution")
 plt.title("Model performance as a function of dataset size")
 plt.legend()
 plt.grid()
-plt.savefig("./figures/{}_mae_over_points.png".format(antigen))
+plt.savefig("./figures/{}_mae_over_points.pdf".format(antigen))
 
 plt.figure()
 plt.plot(n_points_list, f1_svc_list, label="Support Vector Classifier")
@@ -181,19 +182,19 @@ plt.xlabel("Number of points per marginal distribution")
 plt.title("Model performance as a function of dataset size")
 plt.legend()
 plt.grid()
-plt.savefig("./figures/{}_f1_over_points.png".format(antigen))
+plt.savefig("./figures/{}_f1_over_points.pdf".format(antigen))
  """
 
-evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/final_model/linear_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]), antigen))
-evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/pdf_features/final_model/lasso_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/pdf_features/final_model/ridge_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/pdf_features/final_model/support_vector_regression_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_prediction(y_test, y_pred_linear, "./figures/pdf_features/final_model/linear_regression_{}{}.pdf".format("".join([str(n) for n in rm_freqs]), antigen))
+evaluate_model.plot_prediction(y_test, y_pred_lasso, "./figures/pdf_features/final_model/lasso_regression_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_prediction(y_test, y_pred_ridge, "./figures/pdf_features/final_model/ridge_regression_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_prediction(y_test, y_pred_svr, "./figures/pdf_features/final_model/support_vector_regression_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen))
 
-evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/pdf_features/final_model/linear_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/pdf_features/final_model/lasso_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/pdf_features/final_model/ridge_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/pdf_features/final_model/sv_regression_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen))
-evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/pdf_features/final_model/sv_classifier_confusion_matrix_{}{}.png".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
+evaluate_model.plot_confusion_matrix(y_test, y_pred_linear, bins, "./figures/pdf_features/final_model/linear_regression_confusion_matrix_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_lasso, bins, "./figures/pdf_features/final_model/lasso_regression_confusion_matrix_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_ridge, bins, "./figures/pdf_features/final_model/ridge_regression_confusion_matrix_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test, y_pred_svr, bins, "./figures/pdf_features/final_model/sv_regression_confusion_matrix_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen))
+evaluate_model.plot_confusion_matrix(y_test_binned, y_pred_svc, bins, "./figures/pdf_features/final_model/sv_classifier_confusion_matrix_{}{}.pdf".format("".join([str(n) for n in rm_freqs]),  antigen), labels=True)
 
 # Save the results
 """ file = open("./results/ablation.pickle", "wb")

@@ -132,11 +132,16 @@ Meeting 04/30/2024:
 
 Meeting 05/07/2024:
 * - Update labels of plots to Pearson coefficient instead of R
-- Use all antiIge stimulated samples as train and validation and create all plots in a clean fashion
+* - Use all antiIge stimulated samples as train and validation and create all plots in a clean fashion
 (save the plotting scripts such that everything is ready once the test data arrives)
-- Larger labels and prettier uniform plots when it comes to colorcoding
-- Dump all the nice figures in the powerpoint (for all biomarkers and potentially all models)
+* - Larger labels and prettier uniform plots when it comes to colorcoding
+* - Dump all the nice figures in the powerpoint (for all biomarkers and potentially all models)
 * - Make confusion matrix rows sum up to 1 in order to "hide" bad data distribution
 * - Don't use all 41 but only 36 samples 
 
-
+Meeting 05/14/2024:
+- Rotate frequency values for two frequency plot
+- confusion matrix should sum exactly to 1
+- Writing: Problem formulation (inputs outputs), data preprocessing, trainset generation,
+explain algos in easy language (nontechnical audience), include figures just as numbers for first outline
+- Add new figs to PP and mention which purpose they serve and which order they should be in

@@ -11,6 +11,7 @@ import sklearn.pipeline
 from sklearn.svm import SVC, SVR
 import sklearn.linear_model as sklin
 from sklearn.preprocessing import StandardScaler
+from sklearn.utils import shuffle
 import sys
 import pickle
 
@@ -50,14 +51,14 @@ x, y = zip(*xy)
 N = len(x)
 
 # Control the dataset size
-max_combs = 2**13
+max_combs = 2**11
 
 print("Combining the training populations...")
 # Subsample the populations to get dataset
 x_train_mixy, y_train_mixy, x_test_mixy, y_test_mixy = data.subsample_populations_mixy(x, y, train_split=0.99, combine_train=True, combine_test=False, max_combs=max_combs)
 x_train_consty, y_train_consty, x_test_consty, y_test_consty = data.subsample_populations_consty(x, y, train_split=0.99, sample_size=0.8, combs_per_sample=int(max_combs/len(x)))
-x_train_ = [*x_train_mixy, *x_train_consty]
-y_train_ = [*y_train_mixy, *y_train_consty]
+x_train_orig = [*x_train_mixy, *x_train_consty]
+y_train_orig = [*y_train_mixy, *y_train_consty]
 x_test_ = x_test_mixy
 y_test_ = y_test_mixy
 
@@ -75,22 +76,21 @@ for std_ in np.linspace(0.2, 3.0, 29):
 
     print("Estimating the marginal distributions...")
     # Get the marginal distribution features
-    n_points = 20   
-    query_points = data.get_query_points_marginal(x_train_, n_points=n_points, n_std=std_)
-    x_train__ = data.get_marginal_distributions(x_train_, query_points)
-    x_test__ = data.get_marginal_distributions(x_test_, query_points)
+    n_points = 20
+    query_points = data.get_query_points_marginal(x_train_orig, n_points=n_points, n_std=std_)
+    x_train_dist = data.get_marginal_distributions(x_train_orig, query_points)
 
     # Weight the samples differently depending on activation
     w = 1
     print("Weighting samples with activation <= 0.1 by a factor of {}".format(w))
-    weights = np.where(np.array(y_train_) <= 0.1, w, 1)
+    weights = np.where(np.array(y_train_orig) <= 0.1, w, 1)
 
     # Bin labels for classification
     if "203" in antigen:
-        bins = np.linspace(0, max(y_train_)*1.01, 5)
+        bins = np.linspace(0, max(y_train_orig)*1.01, 5)
     else:
         bins = [0., 0.05, 0.20, 0.50, 1.]
-    y_train_binned = data.bin(y_train_, bins, verbose=True)
+    y_train_binned = data.bin(y_train_orig, bins, verbose=True)
     y_test_binned = data.bin(y_test_, bins)
 
     # Define which frequencies to remove
@@ -113,13 +113,16 @@ for std_ in np.linspace(0.2, 3.0, 29):
     feature_idx = []
     for feat in ifc_features:
         feature_idx = feature_idx + list(np.arange(feat * n_points, (feat + 1) * n_points, dtype=int))
-    x_train__ = x_train__[:,feature_idx]
-    x_test__ = x_test__[:,feature_idx]
+    x_train_dist = x_train_dist[:,feature_idx]
 
     # split the data into 10 folds
+    x_train_shuffled, y_train_shuffled = shuffle(x_train_dist, y_train_orig)
     n_folds = 10
-    x_train_folds = np.array_split(x_train__, n_folds)
-    y_train_folds = np.array_split(y_train_, n_folds)
+
+    y_train_binned = data.bin(y_train_shuffled, bins, verbose=True)
+    x_train_folds = np.array_split(x_train_shuffled, n_folds)
+    y_train_folds = np.array_split(y_train_shuffled, n_folds)
+    y_train_binned_folds = np.array_split(y_train_binned, n_folds)
 
     ridge_mae_list_inner = []
     linear_mae_list_inner = []
@@ -134,8 +137,14 @@ for std_ in np.linspace(0.2, 3.0, 29):
     for i in range(n_folds):
         x_train = np.concatenate([x_train_folds[j] for j in range(n_folds) if j != i])
         y_train = np.concatenate([y_train_folds[j] for j in range(n_folds) if j != i])
+        y_train_binned = np.concatenate([y_train_binned_folds[j] for j in range(n_folds) if j != i])
         x_test = x_train_folds[i]
         y_test = y_train_folds[i]
+        y_test_binned = y_train_binned_folds[i]
+
+        print(x_train.shape, y_train.shape, x_test.shape, y_test.shape, y_train_binned.shape, y_test_binned.shape)
+
+        weights = np.where(np.array(y_train) <= 0.1, w, 1)
 
         # Define models
         alpha_lasso = 0.001
@@ -181,6 +190,8 @@ for std_ in np.linspace(0.2, 3.0, 29):
     pearson_ridge = np.mean(ridge_r_list_inner)
     pearson_svr = np.mean(svr_r_list_inner)
 
+    print(mae_ridge, pearson_ridge)
+
     # Store the results
     mae_linear_list.append(mae_linear)
     mae_lasso_list.append(mae_lasso)
@@ -192,7 +203,7 @@ for std_ in np.linspace(0.2, 3.0, 29):
     r_ridge_list.append(pearson_ridge)
     r_svr_list.append(pearson_svr)
 
-    print("Standard deviation: ", std_)
+    print("Range", std_)
 
 
 res = {

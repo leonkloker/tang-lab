@@ -189,7 +189,7 @@ def get_query_points_marginal(features_list, n_points=20, n_std=2):
     features_single_cell = np.array([feature for features in features_list for feature in features])
     mean = np.mean(features_single_cell, axis=0)
     std = np.std(features_single_cell, axis=0)
-    query_points = np.transpose(np.linspace(mean - n_std*std, mean + n_std*std, n_points))
+    query_points = np.transpose(np.linspace(mean - n_std*std, mean + n_std*std, n_points+2)[1:-1,:])
     return query_points
 
 def get_fixed_size_subsample(populations, y, size=200):

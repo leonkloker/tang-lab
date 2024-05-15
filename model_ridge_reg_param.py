@@ -37,7 +37,7 @@ def train_model(pipeline, train, test, classification=False, weights=None, antig
     return pipeline, y_pred, metric
 
 # Read in the base populations
-antigen = "cd63" #cd63 avidin cd203c_dMFI*
+antigen = "cd203c_dMFI*" #cd63 avidin cd203c_dMFI*
 file = './data/36_filtered_populations_{}.pickle'.format(antigen)
 x, y, patients = data.load_data(file, patient_id=True)
 
@@ -50,7 +50,7 @@ x, y = zip(*xy)
 N = len(x)
 
 # Control the dataset size
-max_combs = 2**13
+max_combs = 2**9
 
 print("Combining the training populations...")
 # Subsample the populations to get dataset
@@ -151,6 +151,7 @@ for alpha_ridge in np.logspace(-3, 2, 50):
     r_ridge_list.append(pearson_ridge)
     r_svr_list.append(pearson_svr)
 
+    print(alpha_ridge)
 
 res = {
     "mae_ridge": mae_ridge_list,

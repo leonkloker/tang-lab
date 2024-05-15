@@ -4,6 +4,8 @@ import random
 from sklearn.preprocessing import StandardScaler
 import sys
 
+plt.rcParams['font.family'] = 'Arial'
+
 import data
 
 # Read in the base populations
@@ -64,6 +66,9 @@ colors = [viridis(i/10) for i in range(0,10,1)]
 plt.figure()
 plt.plot(query_points_plot[16,:], x[0,1600:1700], color=colors[1], label="Sample distribution", linewidth=2)
 plt.axvline(x=np.mean(query_points_plot[16, 49:51]), color=colors[5], linestyle='--', linewidth=2, label="Mean", zorder=10)
+
+#for i in range(0, 20):
+#    plt.axvline(x=query_points[16,i], color=colors[8], linestyle=':', linewidth=1.5)
 plt.scatter(query_points[16,:], np.zeros(20), color=colors[8], s=40, label="Query points", marker='x')
 
 plt.grid(True, linestyle=':', linewidth=0.7)
