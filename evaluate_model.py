@@ -33,9 +33,10 @@ def plot_confusion_matrix(y_true, y_pred, bins, savepath, labels=False, normaliz
     if not labels:
         y_pred = np.digitize(y_pred, bins=bins)
         y_true = np.digitize(y_true, bins=bins)
-    cm = confusion_matrix(y_true, y_pred, labels=np.arange(1, len(bins)))
-    cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis] if normalize else cm    
+    cm = confusion_matrix(y_true, y_pred, labels=[i for i in range(1, max(y_true)+1)])
+    cm = np.array([cm[i] / np.inf if cm.sum(axis=1)[i] == 0 else cm[i] / cm.sum(axis=1, dtype=np.float32)[i] for i in range(len(cm))])
     cm = np.round(cm * 100) / 100
+    cm = np.array([cm[i] / np.inf if cm.sum(axis=1)[i] == 0 else cm[i] / cm.sum(axis=1)[i] for i in range(len(cm))])
     disp = ConfusionMatrixDisplay(confusion_matrix=cm)
     disp.plot(cmap=plt.cm.Blues)
     plt.xticks(ticks=np.linspace(-0.5, (len(bins)-2) + 0.5, len(bins)), labels=[f'{x:.2f}' for x in bins])

@@ -140,8 +140,11 @@ Meeting 05/07/2024:
 * - Don't use all 41 but only 36 samples 
 
 Meeting 05/14/2024:
-- Rotate frequency values for two frequency plot
-- confusion matrix should sum exactly to 1
+* - Rotate frequency values for two frequency plot
+* - confusion matrix should sum exactly to 1
 - Writing: Problem formulation (inputs outputs), data preprocessing, trainset generation,
 explain algos in easy language (nontechnical audience), include figures just as numbers for first outline
 - Add new figs to PP and mention which purpose they serve and which order they should be in
+
+- Create one really big train set and save it to disk (16k x 340)
+- Run hyperparameter optimization using this train set and 11 samples as validation set

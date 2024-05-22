@@ -5,6 +5,7 @@ import pickle
 import scipy
 import sys
 import matplotlib.pyplot as plt
+import random
 
 # Read in data from a csv file and return the populations and the activation rates
 def get_data(file, antigen="cd63"):
@@ -117,13 +118,12 @@ def combine_populations(populations, y_raw, combine=True, max_combs=np.inf):
     combined_populations = []
     combinations = []
     combined_y = []
-    enough = False
+    done = False
+
     for k in range(1, max_populations + 1):
         for combination in itertools.combinations(range(len(populations)), k):
-
-            # Remember the combinations
             combinations.append(combination)
-
+    
             # Combine the populations
             combined_populations.append(np.concatenate([populations[i] for i in combination], axis=0))
 
@@ -131,17 +131,16 @@ def combine_populations(populations, y_raw, combine=True, max_combs=np.inf):
             combined_y.append(np.average([y_raw[i] for i in combination], weights=[cells_per_population[i] for i in combination]))
 
             if len(combinations) >= max_combs:
-                enough = True
+                done = True
                 break
-
-        if enough:
+        if done:
             break
 
     combined_y = np.array(combined_y)
     return combined_populations, combined_y, combinations
 
 # take a list of combined populations and return the statistical moment features
-def get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt"]):
+def get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt", "min", "max", "median", "q1", "q3"]):
     # Calculate the features for each combined population
     x = []
         
@@ -153,6 +152,16 @@ def get_statistical_moment_features(combined_populations, features=["mean", "std
         x.append(np.array([pd.DataFrame(combined_population).skew() for combined_population in combined_populations]))
     if "kurt" in features:
         x.append(np.array([pd.DataFrame(combined_population).kurt() for combined_population in combined_populations]))
+    if "min" in features:
+        x.append(np.array([np.min(combined_population, axis=0) for combined_population in combined_populations]))
+    if "max" in features:
+        x.append(np.array([np.max(combined_population, axis=0) for combined_population in combined_populations]))
+    if "median" in features:
+        x.append(np.array([np.median(combined_population, axis=0) for combined_population in combined_populations]))
+    if "q1" in features:
+        x.append(np.array([np.percentile(combined_population, 25, axis=0) for combined_population in combined_populations]))
+    if "q3" in features:
+        x.append(np.array([np.percentile(combined_population, 75, axis=0) for combined_population in combined_populations]))
 
     x = np.concatenate(x, axis=1)
     return x
@@ -162,6 +171,7 @@ def bin(y, bins, verbose=False):
     if verbose:
         for i in range(len(bins)-1):
             print("{} samples with {} < y <= {}".format(np.sum(y == i+1), bins[i], bins[i+1]))
+        print()
     return y
 
 # take a list of populations and return the marginal estimated pdf of each feature
@@ -204,84 +214,151 @@ def get_fixed_size_subsample(populations, y, size=200):
         y_subsamples.append(y_)
     return np.array(subsamples).reshape(len(subsamples), -1), y_subsamples
 
+def pickleLoader(pklFile):
+    try:
+        while True:
+            yield pickle.load(pklFile)
+    except EOFError:
+        pass
 
 # Save the features and the activation rates to a file
-def save_data(file, x, y, patient_id=False, combinations=False):
+def save_data(file, *args):
     with open(file, 'wb') as f:
-        pickle.dump(x, f)
-        pickle.dump(y, f)
-        if patient_id:
-            pickle.dump(patient_id, f)
-        if combinations:
-            pickle.dump(combinations, f)
+        for x in args:
+            pickle.dump(x, f)
 
 # Load the features and the activation rates from a file
-def load_data(file, patient_id=False, combinations=False):
+def load_data(file):
+    res = []
     with open(file, 'rb') as f:
-        x = pickle.load(f)
-        y = pickle.load(f)
-        if patient_id:
-            patient_id = pickle.load(f)
-            return x, y, patient_id
-        if combinations:
-            combinations = pickle.load(f)
-            return x, y, combinations
-        else:
-            return x, y
+        for event in pickleLoader(f):
+            res.append(event)
+    return tuple(res)
         
-def create_dataset(antigen):
+def create_dataset():
     # load data
     file = './data/bat_ifc.csv'
-    samples, y, patient_id = get_data(file, antigen=antigen)
-
-    # create patient classes
-    dic = {}
-    for i, patient in enumerate(set(patient_id)):
-        dic[patient] = i
-    patient_c = [dic[patient] for patient in patient_id]
+    samples, y_cd63, patient_id = get_data(file, antigen="cd63")
+    _, y_cd203c, _ = get_data(file, antigen="cd203c_dMFI*")
+    _, y_avidin, _ = get_data(file, antigen="avidin")
 
     # add opacity to the populations
     samples = add_opacity(samples)
-
+    
     # train/val patients
-    train_val_patients = ['SBC40', 'SBC41', 'SBC10', 'SBC24', 'SBC45', 'SBC37', 'SBC41-B']
+    patient_set = list(sorted(set(patient_id)))
+    train_val_patients = np.random.choice(patient_set, int(len(patient_set)*0.8), replace=False)
 
-    # split data into train/val and test
+    # create split indices
     test_idx = [i for i in range(len(patient_id)) if not patient_id[i] in train_val_patients]
     train_idx = [i for i in range(len(patient_id)) if patient_id[i] in train_val_patients]
 
+    # split the data
     x_train = [samples[i] for i in train_idx]
-    y_train = [y[i] for i in train_idx]
-    id_train = [patient_c[i] for i in train_idx]
+    y_train_cd63 = [y_cd63[i] for i in train_idx]
+    y_train_cd203c = [y_cd203c[i] for i in train_idx]
+    y_train_avidin = [y_avidin[i] for i in train_idx]
 
     x_test = [samples[i] for i in test_idx]
-    y_test = [y[i] for i in test_idx]
-    id_test = [patient_c[i] for i in test_idx]
+    y_test_cd63 = [y_cd63[i] for i in test_idx]
+    y_test_cd203c = [y_cd203c[i] for i in test_idx]
+    y_test_avidin = [y_avidin[i] for i in test_idx]
 
-    print(y_test, y_train)
+    print("Training set size: {}".format(len(x_train)))
+    print("Test set size: {}".format(len(x_test)))
 
-    save_data('./data/{}_populations_train_val_{}.pickle'.format(len(y_train), antigen), x_train, y_train, patient_id=id_train, combinations=False)
-    save_data('./data/{}_populations_test_{}.pickle'.format(len(y_test), antigen), x_test, y_test, patient_id=id_test, combinations=False)
+    # save the data
+    save_data('./data/{}_filtered_populations_antiIge.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+    save_data('./data/{}_filtered_populations_antiIge.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
-def create_one_trainset(antigen):
-    file = './data/bat_ifc.csv'
-    samples, y, patient_id = get_data(file, antigen=antigen)
+    return len(x_train), len(x_test)
 
-    # create patient classes
-    dic = {}
-    for i, patient in enumerate(set(patient_id)):
-        dic[patient] = i
-    patient_c = [dic[patient] for patient in patient_id]
+def precompute_large_marginal_dataset(file_train, file_test, max_combs=2**12,
+                             n_points=20, n_std=2):
+    x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = load_data(file_train)
+    x_test, y_test_avidin, y_test_cd203c, y_test_cd63 = load_data(file_test)
 
-    # add opacity to the populations
-    samples = add_opacity(samples)
+    # Shuffle the data
+    xy = list(zip(x_train, y_train_avidin, y_train_cd203c, y_train_cd63))
+    random.shuffle(xy)
+    x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = zip(*xy)
+    N = len(x_train)
 
-    save_data('./data/{}_filtered_populations_{}.pickle'.format(len(y), antigen), samples, y, patient_id=patient_c, combinations=False)
+    print("Combining the training populations...")
+    # Subsample the populations to get dataset
+    np.random.seed(3)
+    x_train_mixy, y_train_avidin_mixy, _, _ = subsample_populations_mixy(x_train, y_train_avidin, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    np.random.seed(3)
+    x_train_mixy, y_train_cd203c_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd203c, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    np.random.seed(3)
+    x_train_mixy, y_train_cd63_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd63, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    np.random.seed(3)
+    x_train_consty, y_train_avidin_consty, _, _ = subsample_populations_consty(x_train, y_train_avidin, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
+    np.random.seed(3)
+    x_train_consty, y_train_cd203c_consty, _, _ = subsample_populations_consty(x_train, y_train_cd203c, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
+    np.random.seed(3)
+    x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
+
+    x_train = [*x_train_consty]
+    y_train_avidin = [*y_train_avidin_consty]
+    y_train_cd203c = [*y_train_cd203c_consty]
+    y_train_cd63 = [*y_train_cd63_consty]
+
+    print("Estimating the marginal distributions...")
+    # Get the marginal distribution features
+    query_points = get_query_points_marginal(x_train, n_points=n_points, n_std=n_std)
+    x_train = get_marginal_distributions(x_train, query_points)
+    x_test = get_marginal_distributions(x_test, query_points)
+
+    # save the data 
+    save_data('./data/{}_constypopulations_{}_combinations_precomputed_trainset_antiIge_marginal_std{}_{}.pickle'.format(N, len(x_train), n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+    save_data('./data/{}_constypopulations_precomputed_testset_antiIge_marginal_std{}_{}.pickle'.format(len(x_test), n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+
+def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, features=["mean"]):
+    x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = load_data(file_train)
+    x_test, y_test_avidin, y_test_cd203c, y_test_cd63 = load_data(file_test)
+
+    # Shuffle the data
+    xy = list(zip(x_train, y_train_avidin, y_train_cd203c, y_train_cd63))
+    random.shuffle(xy)
+    x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = zip(*xy)
+    N = len(x_train)
+
+    print("Combining the training populations...")
+    # Subsample the populations to get dataset
+    np.random.seed(3)
+    x_train_mixy, y_train_avidin_mixy, _, _ = subsample_populations_mixy(x_train, y_train_avidin, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    np.random.seed(3)
+    x_train_mixy, y_train_cd203c_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd203c, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    np.random.seed(3)
+    x_train_mixy, y_train_cd63_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd63, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    np.random.seed(3)
+    x_train_consty, y_train_avidin_consty, _, _ = subsample_populations_consty(x_train, y_train_avidin, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
+    np.random.seed(3)
+    x_train_consty, y_train_cd203c_consty, _, _ = subsample_populations_consty(x_train, y_train_cd203c, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
+    np.random.seed(3)
+    x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
+
+    x_train = [*x_train_mixy, *x_train_consty]
+    y_train_avidin = [*y_train_avidin_mixy, *y_train_avidin_consty]
+    y_train_cd203c = [*y_train_cd203c_mixy, *y_train_cd203c_consty]
+    y_train_cd63 = [*y_train_cd63_mixy, *y_train_cd63_consty]
+
+    x_train = get_statistical_moment_features(x_train, features=features)
+    x_test = get_statistical_moment_features(x_test, features=features)
+
+    # save the data 
+    save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_{}.pickle'.format(N, len(x_train), "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+    save_data('./data/{}_populations_precomputed_testset_antiIge_{}.pickle'.format(len(x_test), "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
 if __name__ == "__main__":
-    antigen = "cd203c_dMFI*"
-    create_one_trainset(antigen)
-
+    np.random.seed(5)
+    random.seed(2)
+    train_size, test_size = create_dataset()
+    precompute_large_moment_dataset('./data/{}_filtered_populations_antiIge.pickle'.format(train_size), 
+                             './data/{}_filtered_populations_antiIge.pickle'.format(test_size),
+                                max_combs=2**13, features=["mean", "min", "max", "median", "std", "q1", "q3"])#, n_points=20, n_std=2)
+                             
     """ query_points = get_query_points_marginal(samples)
     features = get_marginal_distributions(samples, query_points=query_points)
     print(features[0].shape)

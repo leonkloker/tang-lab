@@ -51,7 +51,7 @@ x, y = zip(*xy)
 N = len(x)
 
 # Control the dataset size
-max_combs = 2**11
+max_combs = 2**10
 
 print("Combining the training populations...")
 # Subsample the populations to get dataset
@@ -116,7 +116,7 @@ for n_points in np.linspace(10, 30, 30, dtype=int):
 
     # split the data into 10 folds
     x_train_shuffled, y_train_shuffled = shuffle(x_train_dist, y_train_orig)
-    n_folds = 10
+    n_folds = 1
 
     y_train_binned = data.bin(y_train_shuffled, bins, verbose=True)
     x_train_folds = np.array_split(x_train_shuffled, n_folds)
