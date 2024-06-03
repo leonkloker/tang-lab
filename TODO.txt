@@ -148,3 +148,12 @@ explain algos in easy language (nontechnical audience), include figures just as 
 
 - Create one really big train set and save it to disk (16k x 340)
 - Run hyperparameter optimization using this train set and 11 samples as validation set
+
+Meeting 05/23/2024:
+* - Adjust all 17 feature values for negative control per patient:
+For each patient, find negative control samples (i.e. dose = 0), calculate the mean for
+each of the 17 features over these samples and then substract it from the patient's positive+
+control samples
+
+Meeting 05/30/2024:
+* - Fix data control group calculation

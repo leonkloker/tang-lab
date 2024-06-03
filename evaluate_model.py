@@ -33,7 +33,7 @@ def plot_confusion_matrix(y_true, y_pred, bins, savepath, labels=False, normaliz
     if not labels:
         y_pred = np.digitize(y_pred, bins=bins)
         y_true = np.digitize(y_true, bins=bins)
-    cm = confusion_matrix(y_true, y_pred, labels=[i for i in range(1, max(y_true)+1)])
+    cm = confusion_matrix(y_true, y_pred, labels=[0,1,2,3])
     cm = np.array([cm[i] / np.inf if cm.sum(axis=1)[i] == 0 else cm[i] / cm.sum(axis=1, dtype=np.float32)[i] for i in range(len(cm))])
     cm = np.round(cm * 100) / 100
     cm = np.array([cm[i] / np.inf if cm.sum(axis=1)[i] == 0 else cm[i] / cm.sum(axis=1)[i] for i in range(len(cm))])
@@ -46,3 +46,4 @@ def plot_confusion_matrix(y_true, y_pred, bins, savepath, labels=False, normaliz
     plt.ylabel('Ground truth', fontsize=12)
     plt.tight_layout()
     plt.savefig(savepath, dpi=400)
+    plt.close()

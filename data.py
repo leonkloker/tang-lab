@@ -6,32 +6,55 @@ import scipy
 import sys
 import matplotlib.pyplot as plt
 import random
+from torch.utils.data import Dataset
 
 # Read in data from a csv file and return the populations and the activation rates
-def get_data(file, antigen="cd63"):
-    features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)] + [antigen] + ['patient_id'] + ['date']
+def get_data(file, normalize_negative_control=False):
+    ifc_features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)]
+    features = ifc_features + ["cd63"] + ["cd203c_dMFI*"] + ["avidin"] + ['patient_id'] + ['date'] + ["dose"]
     df = pd.read_csv(file)[features]
 
+    # remove the experiments from date 04/24/2024
     df = df[df['date'] != '04/24/2024']
     df = df.drop(columns=['date'])
 
     # Group by Baso population
-    populations = df.groupby([antigen, 'patient_id'])
+    populations = df.groupby(["cd63", 'patient_id'])
 
-    # Set the denominator for the activation percentage
-    if "203" in antigen:
-        denominator = 1
-    else:
-        denominator = 100
-
-    # Get activation percentage for each population
-    y_raw = np.array(populations.mean().reset_index()[antigen]) / denominator
-    patient_ids = np.array(populations.mean().reset_index()['patient_id'])
-
+    patient_ids = set(populations.mean().reset_index()['patient_id'])
+    patient_ids_samples = []
     samples = []
-    for i, (_, population) in enumerate(populations):
-        samples.append(population.iloc[:, :-2].to_numpy())
-    return samples, y_raw, patient_ids
+    y_raw_avidin = []
+    y_raw_cd203c = []
+    y_raw_cd63 = []
+    
+    # Get the negative control for each patient
+    for patient in patient_ids:
+        control = np.array(df[(df['patient_id'] == patient) & (df['dose'] == 0)][ifc_features])
+        control = add_opacity([control])[0]
+        control = np.mean(control, axis=0)
+        print(patient)
+
+        # Find the populations for the patient
+        for i, (_, population) in enumerate(populations):
+            if population['patient_id'].iloc[0] == patient:
+                if np.any(np.array(population["dose"]) != 0) or not normalize_negative_control:
+                    y_raw_avidin.append(population["avidin"].mean() / 100)
+                    y_raw_cd203c.append(population["cd203c_dMFI*"].mean())
+                    y_raw_cd63.append(population["cd63"].mean() / 100)
+                    population_features = np.array(population[ifc_features])
+                    population_features = add_opacity([population_features])[0]
+
+                    # Normalize the population by the negative control
+                    if normalize_negative_control:
+                        population_features[:, 0:6] = population_features[:, 0:6] / control[0:6]
+                        population_features[:, 6:12] = population_features[:, 6:12] - control[6:12]
+                        population_features[:, 12:] = population_features[:, 12:] / control[12:]
+
+                    samples.append(population_features)
+                    patient_ids_samples.append(patient)
+
+    return samples, y_raw_avidin, y_raw_cd203c, y_raw_cd63, patient_ids_samples
 
 # Add the opacity to the populations and return the populations
 def add_opacity(populations):
@@ -167,12 +190,13 @@ def get_statistical_moment_features(combined_populations, features=["mean", "std
     return x
 
 def bin(y, bins, verbose=False):
+    y = np.where(np.array(y) < bins[0], bins[0], y)
     y = np.digitize(y, bins)
     if verbose:
         for i in range(len(bins)-1):
             print("{} samples with {} < y <= {}".format(np.sum(y == i+1), bins[i], bins[i+1]))
         print()
-    return y
+    return y-1
 
 # take a list of populations and return the marginal estimated pdf of each feature
 # evaluated at the query points
@@ -235,15 +259,13 @@ def load_data(file):
             res.append(event)
     return tuple(res)
         
-def create_dataset():
+def create_dataset(control=False):
     # load data
     file = './data/bat_ifc.csv'
-    samples, y_cd63, patient_id = get_data(file, antigen="cd63")
-    _, y_cd203c, _ = get_data(file, antigen="cd203c_dMFI*")
-    _, y_avidin, _ = get_data(file, antigen="avidin")
+    samples, y_avidin, y_cd203c, y_cd63, patient_id = get_data(file, normalize_negative_control=control)
 
-    # add opacity to the populations
-    samples = add_opacity(samples)
+    # add opacity to the populations (now already done in get_data)
+    # samples = add_opacity(samples)
     
     # train/val patients
     patient_set = list(sorted(set(patient_id)))
@@ -267,9 +289,12 @@ def create_dataset():
     print("Training set size: {}".format(len(x_train)))
     print("Test set size: {}".format(len(x_test)))
 
-    # save the data
-    save_data('./data/{}_filtered_populations_antiIge.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-    save_data('./data/{}_filtered_populations_antiIge.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+    if control:
+        save_data('./data/{}_populations_antiIge_control.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_populations_antiIge_control.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+    else:
+        save_data('./data/{}_populations_antiIge.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_populations_antiIge.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
     return len(x_train), len(x_test)
 
@@ -299,10 +324,10 @@ def precompute_large_marginal_dataset(file_train, file_test, max_combs=2**12,
     np.random.seed(3)
     x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
 
-    x_train = [*x_train_consty]
-    y_train_avidin = [*y_train_avidin_consty]
-    y_train_cd203c = [*y_train_cd203c_consty]
-    y_train_cd63 = [*y_train_cd63_consty]
+    x_train = [*x_train_mixy, *x_train_consty]
+    y_train_avidin = [*y_train_avidin_mixy, *y_train_avidin_consty]
+    y_train_cd203c = [*y_train_cd203c_mixy, *y_train_cd203c_consty]
+    y_train_cd63 = [*y_train_cd63_mixy, *y_train_cd63_consty]
 
     print("Estimating the marginal distributions...")
     # Get the marginal distribution features
@@ -311,8 +336,8 @@ def precompute_large_marginal_dataset(file_train, file_test, max_combs=2**12,
     x_test = get_marginal_distributions(x_test, query_points)
 
     # save the data 
-    save_data('./data/{}_constypopulations_{}_combinations_precomputed_trainset_antiIge_marginal_std{}_{}.pickle'.format(N, len(x_train), n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-    save_data('./data/{}_constypopulations_precomputed_testset_antiIge_marginal_std{}_{}.pickle'.format(len(x_test), n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+    save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_marginal_std{}_{}.pickle'.format(N, len(x_train), n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+    save_data('./data/{}_populations_precomputed_testset_antiIge_marginal_std{}_{}.pickle'.format(len(x_test), n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
 def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, features=["mean"]):
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = load_data(file_train)
@@ -351,14 +376,58 @@ def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, feat
     save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_{}.pickle'.format(N, len(x_train), "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
     save_data('./data/{}_populations_precomputed_testset_antiIge_{}.pickle'.format(len(x_test), "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
+class Single_cell_dataset(Dataset):
+    def __init__(self, file, max_combs=2**10, antigen="cd63", means=None, stds=None):
+        np.random.seed(3)
+        random.seed(3)
+
+        samples, y_avidin, y_cd203c, y_cd63 = load_data(file)
+
+        if means is not None and stds is not None:
+            self.means = means
+            self.stds = stds
+        else:
+            self.means = np.mean(np.array([cell for sample in samples for cell in sample]), axis=0)
+            self.stds = np.std(np.array([cell for sample in samples for cell in sample]), axis=0)
+
+        if antigen == "cd63":
+            y = y_cd63
+        elif antigen == "cd203c":
+            y = y_cd203c
+        elif antigen == "avidin":
+            y = y_avidin
+        else:
+            raise ValueError("Antigen not recognized.")
+        
+        if max_combs > 0:
+            x_mixy, y_mixy, _, _ = subsample_populations_mixy(samples, y, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+            x_consty, y_consty, _, _ = subsample_populations_consty(samples, y, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/len(samples)))
+            self.x = [*x_mixy, *x_consty]
+            self.y = [*y_mixy, *y_consty]
+        else:
+            self.x = samples
+            self.y = y
+    
+    def get_normalization(self):
+        return self.means, self.stds
+        
+    def __len__(self):
+        return len(self.x)
+    
+    def __getitem__(self, idx):
+        return ((np.array(self.x[idx]) - self.means) / self.stds).astype("float32"), self.y[idx].astype("float32")
+
 if __name__ == "__main__":
     np.random.seed(5)
-    random.seed(2)
-    train_size, test_size = create_dataset()
-    precompute_large_moment_dataset('./data/{}_filtered_populations_antiIge.pickle'.format(train_size), 
-                             './data/{}_filtered_populations_antiIge.pickle'.format(test_size),
-                                max_combs=2**13, features=["mean", "min", "max", "median", "std", "q1", "q3"])#, n_points=20, n_std=2)
-                             
+    random.seed(4)
+    train_size, test_size = create_dataset(control=False)
+    # precompute_large_moment_dataset('./data/{}_populations_antiIge.pickle'.format(train_size), 
+    #                         './data/{}_populations_antiIge.pickle'.format(test_size),
+    #                            max_combs=2**13, features=["mean"])
+    precompute_large_marginal_dataset('./data/{}_populations_antiIge.pickle'.format(train_size),
+                                        './data/{}_populations_antiIge.pickle'.format(test_size),
+                                        max_combs=2**13, n_points=40, n_std=4)
+ 
     """ query_points = get_query_points_marginal(samples)
     features = get_marginal_distributions(samples, query_points=query_points)
     print(features[0].shape)

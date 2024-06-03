@@ -6,60 +6,69 @@ from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import train_test_split
 import torch.nn.functional as F
 from torch.optim.lr_scheduler import OneCycleLR
+import sys
+import numpy as np
 
-import data
-
-class PopulationLoader:
-    def __init__(self, data_dir, batch_size=32):
-        self.data = 
-        self.batch_size = batch_size
-        self.train_data, self.val_data = train_test_split(data, test_size=0.2)
-
-    def train_dataloader(self):
-        return DataLoader(TensorDataset(*self.train_data), batch_size=self.batch_size, shuffle=True)
-
-    def val_dataloader(self):
-        return DataLoader(TensorDataset(*self.val_data), batch_size=self.batch_size)
+from data import Single_cell_dataset
 
 class SimpleFeedForward(pl.LightningModule):
-    def __init__(self):
+    def __init__(self, dims=[17, 64, 64, 1]):
         super(SimpleFeedForward, self).__init__()
-        self.layer_1 = nn.Linear(10, 64)
-        self.layer_2 = nn.Linear(64, 64)
-        self.layer_3 = nn.Linear(64, 1)
+        self.layers = nn.ModuleList()
+        for i in range(1, len(dims)):
+            self.layers.append(nn.Linear(dims[i-1], dims[i]))
 
     def forward(self, x):
-        x = F.relu(self.layer_1(x))
-        x = F.relu(self.layer_2(x))
-        x = torch.sigmoid(self.layer_3(x))
+        for layer in self.layers[:-1]:
+            x = torch.relu(layer(x))
+        x = torch.sigmoid(self.layers[-1](x))
+        x = torch.round(x)
+        x = torch.mean(x)
         return x
 
     def training_step(self, batch, batch_idx):
         x, y = batch
+        y = y[0]
         y_hat = self(x)
-        loss = F.binary_cross_entropy(y_hat, y.unsqueeze(1).float())
-        self.log('train_loss', loss, on_epoch=True)
+        loss = F.mse_loss(y_hat, y)
+        mae = F.l1_loss(y_hat, y)
+        self.log('train_mse', loss, on_epoch=True)
+        self.log('train_mae', mae, on_epoch=True)
         return loss
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
+        y = y[0]
         y_hat = self(x)
-        loss = F.binary_cross_entropy(y_hat, y.unsqueeze(1).float())
-        self.log('val_loss', loss)
+        loss = F.mse_loss(y_hat, y)
+        mae = F.l1_loss(y_hat, y)
+        self.log('val_mse', loss, on_epoch=True)
+        self.log('val_mae', mae, on_epoch=True)
+        return loss
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
         scheduler = OneCycleLR(optimizer, max_lr=1e-2, steps_per_epoch=len(train_loader), epochs=10)
         return [optimizer], [scheduler]
 
-# Create a PyTorch Lightning model
-model = SimpleFeedForward()
+if __name__ == '__main__':
+    torch.manual_seed(42)
 
-# loggers
-tb_logger = TensorBoardLogger('logs/', name='my_model')
+    train_set = Single_cell_dataset('./data/25_filtered_populations_antiIge.pickle', max_combs=2**12)
+    means, stds = train_set.get_normalization()
+    val_set = Single_cell_dataset('./data/11_filtered_populations_antiIge.pickle', max_combs=0, means=means, stds=stds)
 
-# Create a PyTorch Lightning trainer with desired configurations
-trainer = pl.Trainer(max_epochs=10, accelerator='mps', logger=tb_logger)
+    train_loader = DataLoader(train_set, batch_size=1, shuffle=True, num_workers=2, persistent_workers=True)
+    val_loader = DataLoader(val_set, batch_size=1, shuffle=False, num_workers=2, persistent_workers=True)
 
-# Train the model
-trainer.fit(model, train_loader, val_loader)
+    dims = [17, 64, 64, 64, 1]
+    model = SimpleFeedForward(dims=dims)
+
+    # loggers
+    tb_logger = TensorBoardLogger('logs/', name='FNN_{}'.format('_'.join(map(str, dims))))
+
+    # Create a PyTorch Lightning trainer with desired configurations
+    trainer = pl.Trainer(max_epochs=100, accelerator='mps', logger=tb_logger)
+
+    # Train the model
+    trainer.fit(model, train_loader, val_loader)
