@@ -157,3 +157,15 @@ control samples
 
 Meeting 05/30/2024:
 * - Fix data control group calculation
+- Tried single-cell classification with NN 
+- Tried clustering into two clusters for activated and non-activated cell 
+- Tried other classifiers such as Naive Bayes, Random Forest, Nearest Centroid on both only 
+statistical moment features and features sampled from marginal distribution
+
+Meeting 06/04/2024:
+- Autoencoder on cell level and cluster in the latent space, see if cluster ratio somehow correlates
+with activation levels
+- k-fold cross validation to make results more independent from train / val split 
+- Try different number of classes for classification
+- Update patient data from Gdrive
+

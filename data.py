@@ -33,7 +33,6 @@ def get_data(file, normalize_negative_control=False):
         control = np.array(df[(df['patient_id'] == patient) & (df['dose'] == 0)][ifc_features])
         control = add_opacity([control])[0]
         control = np.mean(control, axis=0)
-        print(patient)
 
         # Find the populations for the patient
         for i, (_, population) in enumerate(populations):
@@ -185,6 +184,10 @@ def get_statistical_moment_features(combined_populations, features=["mean", "std
         x.append(np.array([np.percentile(combined_population, 25, axis=0) for combined_population in combined_populations]))
     if "q3" in features:
         x.append(np.array([np.percentile(combined_population, 75, axis=0) for combined_population in combined_populations]))
+    if "range" in features:
+        x.append(np.array([np.max(combined_population, axis=0) - np.min(combined_population, axis=0) for combined_population in combined_populations]))
+    if "interquartile_range" in features:
+        x.append(np.array([np.percentile(combined_population, 75, axis=0) - np.percentile(combined_population, 25, axis=0) for combined_population in combined_populations]))
 
     x = np.concatenate(x, axis=1)
     return x
@@ -423,10 +426,10 @@ if __name__ == "__main__":
     train_size, test_size = create_dataset(control=False)
     # precompute_large_moment_dataset('./data/{}_populations_antiIge.pickle'.format(train_size), 
     #                         './data/{}_populations_antiIge.pickle'.format(test_size),
-    #                            max_combs=2**13, features=["mean"])
+    #                            max_combs=2**13, features=["mean", "min", "max", "median", "std", "q1", "q3", "range", "interquartile_range"])
     precompute_large_marginal_dataset('./data/{}_populations_antiIge.pickle'.format(train_size),
                                         './data/{}_populations_antiIge.pickle'.format(test_size),
-                                        max_combs=2**13, n_points=40, n_std=4)
+                                        max_combs=2**13, n_points=100, n_std=4)
  
     """ query_points = get_query_points_marginal(samples)
     features = get_marginal_distributions(samples, query_points=query_points)

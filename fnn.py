@@ -22,7 +22,7 @@ class SimpleFeedForward(pl.LightningModule):
         for layer in self.layers[:-1]:
             x = torch.relu(layer(x))
         x = torch.sigmoid(self.layers[-1](x))
-        x = torch.round(x)
+        #x = torch.round(x)
         x = torch.mean(x)
         return x
 
@@ -47,19 +47,19 @@ class SimpleFeedForward(pl.LightningModule):
         return loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=1e-3)
-        scheduler = OneCycleLR(optimizer, max_lr=1e-2, steps_per_epoch=len(train_loader), epochs=10)
+        optimizer = torch.optim.Adam(self.parameters(), lr=1e-0)
+        scheduler = OneCycleLR(optimizer, max_lr=1e-0, steps_per_epoch=len(train_loader), epochs=100)
         return [optimizer], [scheduler]
 
 if __name__ == '__main__':
     torch.manual_seed(42)
 
-    train_set = Single_cell_dataset('./data/25_filtered_populations_antiIge.pickle', max_combs=2**12)
+    train_set = Single_cell_dataset('./data/25_populations_antiIge.pickle', max_combs=1)
     means, stds = train_set.get_normalization()
-    val_set = Single_cell_dataset('./data/11_filtered_populations_antiIge.pickle', max_combs=0, means=means, stds=stds)
+    val_set = Single_cell_dataset('./data/25_populations_antiIge.pickle', max_combs=1, means=means, stds=stds)
 
-    train_loader = DataLoader(train_set, batch_size=1, shuffle=True, num_workers=2, persistent_workers=True)
-    val_loader = DataLoader(val_set, batch_size=1, shuffle=False, num_workers=2, persistent_workers=True)
+    train_loader = DataLoader(train_set, batch_size=1, shuffle=False, num_workers=1, persistent_workers=True)
+    val_loader = DataLoader(val_set, batch_size=1, shuffle=False, num_workers=1, persistent_workers=True)
 
     dims = [17, 64, 64, 64, 1]
     model = SimpleFeedForward(dims=dims)
@@ -68,7 +68,7 @@ if __name__ == '__main__':
     tb_logger = TensorBoardLogger('logs/', name='FNN_{}'.format('_'.join(map(str, dims))))
 
     # Create a PyTorch Lightning trainer with desired configurations
-    trainer = pl.Trainer(max_epochs=100, accelerator='mps', logger=tb_logger)
+    trainer = pl.Trainer(max_epochs=100, accelerator='mps', logger=tb_logger, log_every_n_steps=1)
 
     # Train the model
     trainer.fit(model, train_loader, val_loader)
