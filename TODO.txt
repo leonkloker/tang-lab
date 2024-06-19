@@ -165,7 +165,21 @@ statistical moment features and features sampled from marginal distribution
 Meeting 06/04/2024:
 - Autoencoder on cell level and cluster in the latent space, see if cluster ratio somehow correlates
 with activation levels
-- k-fold cross validation to make results more independent from train / val split 
+* - k-fold cross validation to make results more independent from train / val split 
 - Try different number of classes for classification
-- Update patient data from Gdrive
+* - Update patient data from Gdrive
+
+Meeting 06/11/2024:
+- Autoencoder on cell level and cluster in the latent space, see if cluster ratio somehow correlates
+with activation levels
+- Cut out spurious samples
+
+Meeting 06/18/2024:
+- Frequency ablation using mean model and cross validation across patients (either with disjoint patient sets if possible
+otherwise with population split dataset)
+- Try different binary classification thresholds
+- Try around with marginal model to see if performance can be boosted
+- Check if data augmentation messes up the model
+
+
 

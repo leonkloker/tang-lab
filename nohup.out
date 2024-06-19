@@ -1,0 +1,107 @@
+GPU available: True (mps), used: True
+TPU available: False, using: 0 TPU cores
+IPU available: False, using: 0 IPUs
+HPU available: False, using: 0 HPUs
+
+  | Name    | Type           | Params
+-------------------------------------------
+0 | encoder | ModuleList     | 180   
+1 | decoder | ModuleList     | 193   
+2 | rel_mse | RelativeL2Loss | 0     
+-------------------------------------------
+373       Trainable params
+0         Non-trainable params
+373       Total params
+0.001     Total estimated model params size (MB)
+Sanity Checking: |          | 0/? [00:00<?, ?it/s]/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/connectors/data_connector.py:441: The 'val_dataloader' does not have many workers which may be a bottleneck. Consider increasing the value of the `num_workers` argument` to `num_workers=7` in the `DataLoader` to improve performance.
+Sanity Checking:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:   0%|          | 0/2 [00:00<?, ?it/s]Sanity Checking DataLoader 0:  50%|█████     | 1/2 [00:00<00:00,  6.57it/s]Sanity Checking DataLoader 0: 100%|██████████| 2/2 [00:00<00:00, 11.32it/s]                                                                           [rank: 0] Received SIGTERM: 15
+[rank: 0] Received SIGTERM: 15
+Traceback (most recent call last):
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/call.py", line 44, in _call_and_handle_interrupt
+    return trainer_fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/trainer.py", line 580, in _fit_impl
+    self._run(model, ckpt_path=ckpt_path)
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/trainer.py", line 987, in _run
+    results = self._run_stage()
+              ^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/trainer.py", line 1033, in _run_stage
+    self.fit_loop.run()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fit_loop.py", line 197, in run
+    self.setup_data()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fit_loop.py", line 263, in setup_data
+    iter(self._data_fetcher)  # creates the iterator inside the fetcher
+    ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fetchers.py", line 104, in __iter__
+    super().__iter__()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fetchers.py", line 51, in __iter__
+    self.iterator = iter(self.combined_loader)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/utilities/combined_loader.py", line 351, in __iter__
+    iter(iterator)
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/utilities/combined_loader.py", line 92, in __iter__
+    super().__iter__()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/utilities/combined_loader.py", line 43, in __iter__
+    self.iterators = [iter(iterable) for iterable in self.iterables]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/utilities/combined_loader.py", line 43, in <listcomp>
+    self.iterators = [iter(iterable) for iterable in self.iterables]
+                      ^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 434, in __iter__
+    self._iterator = self._get_iterator()
+                     ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 387, in _get_iterator
+    return _MultiProcessingDataLoaderIter(self)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/torch/utils/data/dataloader.py", line 1040, in __init__
+    w.start()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/process.py", line 121, in start
+    self._popen = self._Popen(self)
+                  ^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/context.py", line 224, in _Popen
+    return _default_context.get_context().Process._Popen(process_obj)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/context.py", line 288, in _Popen
+    return Popen(process_obj)
+           ^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/popen_spawn_posix.py", line 32, in __init__
+    super().__init__(process_obj)
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/popen_fork.py", line 19, in __init__
+    self._launch(process_obj)
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/popen_spawn_posix.py", line 47, in _launch
+    reduction.dump(process_obj, fp)
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/reduction.py", line 60, in dump
+    ForkingPickler(file, protocol).dump(obj)
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/multiprocessing/queues.py", line 57, in __getstate__
+    def __getstate__(self):
+
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/torch/utils/data/_utils/signal_handling.py", line 66, in handler
+    _error_if_any_worker_fails()
+RuntimeError: DataLoader worker (pid 77219) is killed by signal: Terminated: 15. 
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/leon/Documents/code/tang-lab/autoencoder.py", line 91, in <module>
+    trainer.fit(model, train_loader, val_loader)
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/trainer.py", line 544, in fit
+    call._call_and_handle_interrupt(
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/call.py", line 68, in _call_and_handle_interrupt
+    trainer._teardown()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/trainer/trainer.py", line 1014, in _teardown
+    loop.teardown()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fit_loop.py", line 411, in teardown
+    self._data_fetcher.teardown()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fetchers.py", line 79, in teardown
+    self.reset()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fetchers.py", line 141, in reset
+    super().reset()
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/loops/fetchers.py", line 75, in reset
+    self.length = sized_len(self.combined_loader)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/lightning_fabric/utilities/data.py", line 51, in sized_len
+    length = len(dataloader)  # type: ignore [arg-type]
+             ^^^^^^^^^^^^^^^
+  File "/Users/leon/anaconda3/envs/tang-lab/lib/python3.11/site-packages/pytorch_lightning/utilities/combined_loader.py", line 358, in __len__
+    raise RuntimeError("Please call `iter(combined_loader)` first.")
+RuntimeError: Please call `iter(combined_loader)` first.

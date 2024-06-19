@@ -6,7 +6,9 @@ import scipy
 import sys
 import matplotlib.pyplot as plt
 import random
+import os
 from torch.utils.data import Dataset
+from sklearn.model_selection import KFold
 
 # Read in data from a csv file and return the populations and the activation rates
 def get_data(file, normalize_negative_control=False):
@@ -262,47 +264,78 @@ def load_data(file):
             res.append(event)
     return tuple(res)
         
-def create_dataset(control=False):
+def create_dataset(control=False, k=None):
     # load data
     file = './data/bat_ifc.csv'
     samples, y_avidin, y_cd203c, y_cd63, patient_id = get_data(file, normalize_negative_control=control)
 
     # add opacity to the populations (now already done in get_data)
     # samples = add_opacity(samples)
-    
+
     # train/val patients
     patient_set = list(sorted(set(patient_id)))
-    train_val_patients = np.random.choice(patient_set, int(len(patient_set)*0.8), replace=False)
 
-    # create split indices
-    test_idx = [i for i in range(len(patient_id)) if not patient_id[i] in train_val_patients]
-    train_idx = [i for i in range(len(patient_id)) if patient_id[i] in train_val_patients]
+    if k != None:
+        os.makedirs('./data/{}_fold'.format(k), exist_ok=True)
+        kf = KFold(n_splits=k, shuffle=True, random_state=42)
 
-    # split the data
-    x_train = [samples[i] for i in train_idx]
-    y_train_cd63 = [y_cd63[i] for i in train_idx]
-    y_train_cd203c = [y_cd203c[i] for i in train_idx]
-    y_train_avidin = [y_avidin[i] for i in train_idx]
+        for i, (train_index, val_index) in enumerate(kf.split(patient_set)):
+            train_val_patients = [patient_set[i] for i in train_index]
+        
+            # create split indices
+            test_idx = [i for i in range(len(patient_id)) if not patient_id[i] in train_val_patients]
+            train_idx = [i for i in range(len(patient_id)) if patient_id[i] in train_val_patients]
 
-    x_test = [samples[i] for i in test_idx]
-    y_test_cd63 = [y_cd63[i] for i in test_idx]
-    y_test_cd203c = [y_cd203c[i] for i in test_idx]
-    y_test_avidin = [y_avidin[i] for i in test_idx]
+            # split the data
+            x_train = [samples[i] for i in train_idx]
+            y_train_cd63 = [y_cd63[i] for i in train_idx]
+            y_train_cd203c = [y_cd203c[i] for i in train_idx]
+            y_train_avidin = [y_avidin[i] for i in train_idx]
 
-    print("Training set size: {}".format(len(x_train)))
-    print("Test set size: {}".format(len(x_test)))
+            x_test = [samples[i] for i in test_idx]
+            y_test_cd63 = [y_cd63[i] for i in test_idx]
+            y_test_cd203c = [y_cd203c[i] for i in test_idx]
+            y_test_avidin = [y_avidin[i] for i in test_idx]
 
-    if control:
-        save_data('./data/{}_populations_antiIge_control.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-        save_data('./data/{}_populations_antiIge_control.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+            if not control:
+                save_data('./data/{}_fold/{}_train.pickle'.format(k, i), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+                save_data('./data/{}_fold/{}_test.pickle'.format(k, i), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+            else:
+                save_data('./data/{}_fold_control/{}_train.pickle'.format(k, i), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+                save_data('./data/{}_fold_control/{}_test.pickle'.format(k, i), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+
     else:
-        save_data('./data/{}_populations_antiIge.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-        save_data('./data/{}_populations_antiIge.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+        train_val_patients = np.random.choice(patient_set, int(len(patient_set)*0.8), replace=False)
 
-    return len(x_train), len(x_test)
+        # create split indices
+        test_idx = [i for i in range(len(patient_id)) if not patient_id[i] in train_val_patients]
+        train_idx = [i for i in range(len(patient_id)) if patient_id[i] in train_val_patients]
+
+        # split the data
+        x_train = [samples[i] for i in train_idx]
+        y_train_cd63 = [y_cd63[i] for i in train_idx]
+        y_train_cd203c = [y_cd203c[i] for i in train_idx]
+        y_train_avidin = [y_avidin[i] for i in train_idx]
+
+        x_test = [samples[i] for i in test_idx]
+        y_test_cd63 = [y_cd63[i] for i in test_idx]
+        y_test_cd203c = [y_cd203c[i] for i in test_idx]
+        y_test_avidin = [y_avidin[i] for i in test_idx]
+
+        print("Training set size: {}".format(len(x_train)))
+        print("Test set size: {}".format(len(x_test)))
+
+        if not control:
+            save_data('./data/{}_populations_antiIge.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+            save_data('./data/{}_populations_antiIge.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+        else:
+            save_data('./data/{}_populations_antiIge_control.pickle'.format(len(x_train)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+            save_data('./data/{}_populations_antiIge_control.pickle'.format(len(x_test)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+
+        return len(x_train), len(x_test)
 
 def precompute_large_marginal_dataset(file_train, file_test, max_combs=2**12,
-                             n_points=20, n_std=2):
+                             n_points=20, n_std=2, k=None, idx=None):
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = load_data(file_train)
     x_test, y_test_avidin, y_test_cd203c, y_test_cd63 = load_data(file_test)
 
@@ -337,12 +370,15 @@ def precompute_large_marginal_dataset(file_train, file_test, max_combs=2**12,
     query_points = get_query_points_marginal(x_train, n_points=n_points, n_std=n_std)
     x_train = get_marginal_distributions(x_train, query_points)
     x_test = get_marginal_distributions(x_test, query_points)
+    
+    if k is None:
+        save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_marginal_std{}_{}.pickle'.format(N, len(x_train), n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_populations_precomputed_testset_antiIge_marginal_std{}_{}.pickle'.format(len(x_test), n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+    else:
+        save_data('./data/{}_fold/{}_train_std{}_{}.pickle'.format(k, idx, n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_fold/{}_test_std{}_{}.pickle'.format(k, idx, n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
-    # save the data 
-    save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_marginal_std{}_{}.pickle'.format(N, len(x_train), n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-    save_data('./data/{}_populations_precomputed_testset_antiIge_marginal_std{}_{}.pickle'.format(len(x_test), n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
-
-def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, features=["mean"]):
+def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, features=["mean"], k=None, idx=None):
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = load_data(file_train)
     x_test, y_test_avidin, y_test_cd203c, y_test_cd63 = load_data(file_test)
 
@@ -376,8 +412,13 @@ def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, feat
     x_test = get_statistical_moment_features(x_test, features=features)
 
     # save the data 
-    save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_{}.pickle'.format(N, len(x_train), "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-    save_data('./data/{}_populations_precomputed_testset_antiIge_{}.pickle'.format(len(x_test), "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+    if k is None:
+        save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_{}.pickle'.format(N, len(x_train), "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_populations_precomputed_testset_antiIge_{}.pickle'.format(len(x_test), "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)    
+    else:
+        save_data('./data/{}_fold/{}_train_{}.pickle'.format(k, idx, "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_fold/{}_test_{}.pickle'.format(k, idx, "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+
 
 class Single_cell_dataset(Dataset):
     def __init__(self, file, max_combs=2**10, antigen="cd63", means=None, stds=None):
@@ -423,21 +464,20 @@ class Single_cell_dataset(Dataset):
 if __name__ == "__main__":
     np.random.seed(5)
     random.seed(4)
-    train_size, test_size = create_dataset(control=False)
+    #train_size, test_size = create_dataset(control=False, k=5)
     # precompute_large_moment_dataset('./data/{}_populations_antiIge.pickle'.format(train_size), 
     #                         './data/{}_populations_antiIge.pickle'.format(test_size),
     #                            max_combs=2**13, features=["mean", "min", "max", "median", "std", "q1", "q3", "range", "interquartile_range"])
-    precompute_large_marginal_dataset('./data/{}_populations_antiIge.pickle'.format(train_size),
-                                        './data/{}_populations_antiIge.pickle'.format(test_size),
-                                        max_combs=2**13, n_points=100, n_std=4)
- 
-    """ query_points = get_query_points_marginal(samples)
-    features = get_marginal_distributions(samples, query_points=query_points)
-    print(features[0].shape)
-    plt.figure()
-    for i in range(17):
-        plt.plot(features[0][i*20:(i+1)*20])
-    plt.show() """
-    """ plt.figure()
-    plt.plot(features[0][:20])
-    plt.show() """
+    # precompute_large_marginal_dataset('./data/{}_populations_antiIge.pickle'.format(train_size),
+    #                                     './data/{}_populations_antiIge.pickle'.format(test_size),
+    #                                     max_combs=2**13, n_points=100, n_std=4)
+
+    k = 10
+    create_dataset(k=k)
+    for i in range(k):
+        # precompute_large_moment_dataset('./data/{}_fold/{}_train.pickle'.format(k, i), 
+        #                         './data/{}_fold/{}_test.pickle'.format(k, i),
+        #                         max_combs=2**12, features=["mean", "min", "max", "median", "std", "q1", "q3"], k=k, idx=i)
+        precompute_large_marginal_dataset('./data/{}_fold/{}_train.pickle'.format(k, i),
+                                        './data/{}_fold/{}_test.pickle'.format(k, i),
+                                        max_combs=2**12, n_points=20, n_std=4, k=k, idx=i)

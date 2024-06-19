@@ -36,14 +36,20 @@ class Autoencoder(pl.LightningModule):
             self.encoder.append(nn.Linear(dims[i-1], dims[i]))
             self.decoder.append(nn.Linear(dims[-i], dims[-1-i]))
 
-    def forward(self, x):
+    def encode(self, x):
         for layer in self.encoder:
             x = torch.relu(layer(x))
-
+        return x
+    
+    def decode(self, x):
         for layer in self.decoder[:-1]:
             x = torch.relu(layer(x))
         x = self.decoder[-1](x)
+        return x
 
+    def forward(self, x):
+        self.encode(x)
+        self.decode(x)
         return x
 
     def training_step(self, batch, batch_idx):
@@ -71,7 +77,7 @@ class Autoencoder(pl.LightningModule):
 if __name__ == '__main__':
     torch.manual_seed(42)
 
-    train_set = Single_cell_dataset('./data/25_populations_antiIge.pickle', max_combs=1000)
+    train_set = Single_cell_dataset('./data/25_populations_antiIge.pickle', max_combs=2**13)
     means, stds = train_set.get_normalization()
     val_set = Single_cell_dataset('./data/11_populations_antiIge.pickle', max_combs=11, means=means, stds=stds)
 
@@ -85,7 +91,7 @@ if __name__ == '__main__':
     tb_logger = TensorBoardLogger('logs/', name='AE_{}'.format('_'.join(map(str, dims))))
 
     # Create a PyTorch Lightning trainer with desired configurations
-    trainer = pl.Trainer(max_epochs=100, accelerator='mps', logger=tb_logger, log_every_n_steps=100)
+    trainer = pl.Trainer(max_epochs=100, accelerator='mps', logger=tb_logger, log_every_n_steps=1000)
 
     # Train the model
     trainer.fit(model, train_loader, val_loader)
