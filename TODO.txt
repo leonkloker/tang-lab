@@ -177,9 +177,20 @@ with activation levels
 Meeting 06/18/2024:
 - Frequency ablation using mean model and cross validation across patients (either with disjoint patient sets if possible
 otherwise with population split dataset)
-- Try different binary classification thresholds
-- Try around with marginal model to see if performance can be boosted
-- Check if data augmentation messes up the model
+* - Try different binary classification thresholds
+0.05 actually best right now with the updated augmentation procedure
+* - Try around with marginal model to see if performance can be boosted
+Marginal model worse than moment model 
+* - Check if data augmentation messes up the model:
+Best results when only augmenting with constant y (i.e. subsampling without combining any populations)
 
+Meeting 06/27/2024:
+- 3 or 4 classification bins 
+F1 score goes down to around .75, also makes having equally balanced classes during cross-validation challenging
+- Frequency ablation using mean model and cross validation across patients (either with disjoint patient sets if possible
+otherwise with population split dataset)
+- write outline for manuscript
 
-
+Meeting 07/02/2024:
+- UMAP for data vis to see if theres a trend
+- Write manuscript

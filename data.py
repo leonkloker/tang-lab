@@ -120,7 +120,7 @@ def subsample_populations_consty(populations, y_raw, train_split=0.8, sample_siz
         test_idx = [i for i in range(n) if i not in train_idx]
 
         for i in range(combs_per_sample):
-            train_idx_sub = np.random.choice(train_idx, int(len(train_idx)*sample_size), replace=False)
+            train_idx_sub = np.random.choice(train_idx, int(len(train_idx)*sample_size), replace=True)
             train_samples.append(population[train_idx_sub, :])
             y_train.append(y)
 
@@ -266,8 +266,11 @@ def load_data(file):
         
 def create_dataset(control=False, k=None):
     # load data
-    file = './data/bat_ifc.csv'
+    file = './data/bat_ifc-4.csv'
     samples, y_avidin, y_cd203c, y_cd63, patient_id = get_data(file, normalize_negative_control=control)
+
+    print("Number of samples: {}".format(len(samples)))
+    print("Number of patients: {}".format(len(set(patient_id))))
 
     # add opacity to the populations (now already done in get_data)
     # samples = add_opacity(samples)
@@ -390,23 +393,23 @@ def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, feat
 
     print("Combining the training populations...")
     # Subsample the populations to get dataset
+    # np.random.seed(3)
+    # x_train_mixy, y_train_avidin_mixy, _, _ = subsample_populations_mixy(x_train, y_train_avidin, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    # np.random.seed(3)
+    # x_train_mixy, y_train_cd203c_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd203c, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    # np.random.seed(3)
+    # x_train_mixy, y_train_cd63_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd63, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
     np.random.seed(3)
-    x_train_mixy, y_train_avidin_mixy, _, _ = subsample_populations_mixy(x_train, y_train_avidin, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    x_train_consty, y_train_avidin_consty, _, _ = subsample_populations_consty(x_train, y_train_avidin, train_split=.99, sample_size=0.8, combs_per_sample=int(max_combs/N))
     np.random.seed(3)
-    x_train_mixy, y_train_cd203c_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd203c, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
+    x_train_consty, y_train_cd203c_consty, _, _ = subsample_populations_consty(x_train, y_train_cd203c, train_split=.99, sample_size=0.8, combs_per_sample=int(max_combs/N))
     np.random.seed(3)
-    x_train_mixy, y_train_cd63_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd63, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
-    np.random.seed(3)
-    x_train_consty, y_train_avidin_consty, _, _ = subsample_populations_consty(x_train, y_train_avidin, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
-    np.random.seed(3)
-    x_train_consty, y_train_cd203c_consty, _, _ = subsample_populations_consty(x_train, y_train_cd203c, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
-    np.random.seed(3)
-    x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
+    x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=0.8, combs_per_sample=int(max_combs/N))
 
-    x_train = [*x_train_mixy, *x_train_consty]
-    y_train_avidin = [*y_train_avidin_mixy, *y_train_avidin_consty]
-    y_train_cd203c = [*y_train_cd203c_mixy, *y_train_cd203c_consty]
-    y_train_cd63 = [*y_train_cd63_mixy, *y_train_cd63_consty]
+    x_train = [*x_train_consty] #[*x_train_mixy, *x_train_consty]
+    y_train_avidin = [*y_train_avidin_consty] #[*y_train_avidin_mixy, *y_train_avidin_consty]
+    y_train_cd203c = [*y_train_cd203c_consty] #[*y_train_cd203c_mixy, *y_train_cd203c_consty]
+    y_train_cd63 = [*y_train_cd63_consty] #[*y_train_cd63_mixy, *y_train_cd63_consty]
 
     x_train = get_statistical_moment_features(x_train, features=features)
     x_test = get_statistical_moment_features(x_test, features=features)
@@ -472,12 +475,12 @@ if __name__ == "__main__":
     #                                     './data/{}_populations_antiIge.pickle'.format(test_size),
     #                                     max_combs=2**13, n_points=100, n_std=4)
 
-    k = 10
+    k = 15
     create_dataset(k=k)
     for i in range(k):
-        # precompute_large_moment_dataset('./data/{}_fold/{}_train.pickle'.format(k, i), 
-        #                         './data/{}_fold/{}_test.pickle'.format(k, i),
-        #                         max_combs=2**12, features=["mean", "min", "max", "median", "std", "q1", "q3"], k=k, idx=i)
-        precompute_large_marginal_dataset('./data/{}_fold/{}_train.pickle'.format(k, i),
-                                        './data/{}_fold/{}_test.pickle'.format(k, i),
-                                        max_combs=2**12, n_points=20, n_std=4, k=k, idx=i)
+        precompute_large_moment_dataset('./data/{}_fold/{}_train.pickle'.format(k, i), 
+                                './data/{}_fold/{}_test.pickle'.format(k, i),
+                                max_combs=2**12, features=["mean", "min", "max", "median", "std", "q1", "q3"], k=k, idx=i)
+        # precompute_large_marginal_dataset('./data/{}_fold/{}_train.pickle'.format(k, i),
+        #                                 './data/{}_fold/{}_test.pickle'.format(k, i),
+        #                                 max_combs=2**12, n_points=60, n_std=3, k=k, idx=i)

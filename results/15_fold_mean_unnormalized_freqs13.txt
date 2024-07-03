@@ -1,0 +1,70 @@
+Training models using fold 0
+Training models using fold 1
+Training models using fold 2
+Training models using fold 3
+Training models using fold 4
+Training models using fold 5
+Training models using fold 6
+Training models using fold 7
+Training models using fold 8
+Training models using fold 9
+Training models using fold 10
+Training models using fold 11
+Training models using fold 12
+Training models using fold 13
+Training models using fold 14
+Linear Regression : 
+Avidin : MAE =  0.08336696756422328 , Pearson correlation =  0.6918516562319701
+CD203c : MAE =  1.306433278478689 , Pearson correlation =  0.6626184050797905
+CD63 : MAE =  0.11229203961992094 , Pearson correlation =  0.8798218875717573
+
+Lasso Regression : 
+Avidin : MAE =  0.07589286592351546 , Pearson correlation =  0.7179148896573186
+CD203c : MAE =  1.19765524833052 , Pearson correlation =  0.7077908069324047
+CD63 : MAE =  0.10602147564948271 , Pearson correlation =  0.8881495417307231
+
+Ridge Regression : 
+Avidin : MAE =  0.0885450288175199 , Pearson correlation =  0.6659724628016129
+CD203c : MAE =  1.2502063955709202 , Pearson correlation =  0.6821563798389739
+CD63 : MAE =  0.10538585229463958 , Pearson correlation =  0.8935425175377816
+
+SVR : 
+Avidin : MAE =  0.0917467334867128 , Pearson correlation =  0.6440368206415938
+CD203c : MAE =  1.3156423637410672 , Pearson correlation =  0.6775515209546161
+CD63 : MAE =  0.105686670246183 , Pearson correlation =  0.8932925132722742
+
+XGBTree : 
+Avidin : MAE =  0.08484996448355914 , Pearson correlation =  0.5978591811670364
+CD203c : MAE =  1.2290354759248228 , Pearson correlation =  0.6652647552822499
+CD63 : MAE =  0.1270942656513388 , Pearson correlation =  0.7556979389073442
+
+XGBLinear : 
+Avidin : MAE =  0.08128927597316829 , Pearson correlation =  0.6773407237116138
+CD203c : MAE =  1.169602056064389 , Pearson correlation =  0.7214551524586262
+CD63 : MAE =  0.10039215947288005 , Pearson correlation =  0.8931889776831055
+
+SVC : 
+Avidin : F1 =  0.7944992215879606
+CD203c : F1 =  0.8860663146377431
+CD63 : F1 =  0.8861867245364909
+
+XGBTree Classifier : 
+Avidin : F1 =  0.8625
+CD203c : F1 =  0.9310594016476369
+CD63 : F1 =  0.8406624383368569
+
+Naive Bayes : 
+Avidin : F1 =  0.7488323819408407
+CD203c : F1 =  0.7949193663479378
+CD63 : F1 =  0.749612403100775
+
+Nearest Centroid : 
+Avidin : F1 =  0.8166666666666668
+CD203c : F1 =  0.8850990027460616
+CD63 : F1 =  0.7938623390102374
+
+Random Forest : 
+Avidin : F1 =  0.9083333333333333
+CD203c : F1 =  0.9316397887826459
+CD63 : F1 =  0.8636363636363636
+

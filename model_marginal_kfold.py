@@ -50,8 +50,8 @@ k = 10
 samples = 9000
 
 # Model hyperparameters
-n_points = 20
-n_std = 4
+n_points = 60
+n_std = 3
 
 # Bin labels for classification
 bins_cd203c = [0., 2.5, 14.2]
