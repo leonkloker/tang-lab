@@ -20,10 +20,12 @@ def get_data(file, normalize_negative_control=False):
     df = df[df['date'] != '04/24/2024']
     df = df.drop(columns=['date'])
 
+    # remove potential outliers
+
     # Group by Baso population
     populations = df.groupby(["cd63", 'patient_id'])
 
-    patient_ids = set(populations.mean().reset_index()['patient_id'])
+    patient_ids = sorted(set(populations.mean().reset_index()['patient_id']))
     patient_ids_samples = []
     samples = []
     y_raw_avidin = []
@@ -266,7 +268,7 @@ def load_data(file):
         
 def create_dataset(control=False, k=None):
     # load data
-    file = './data/bat_ifc-4.csv'
+    file = './data/bat_ifc.csv'
     samples, y_avidin, y_cd203c, y_cd63, patient_id = get_data(file, normalize_negative_control=control)
 
     print("Number of samples: {}".format(len(samples)))
@@ -475,12 +477,12 @@ if __name__ == "__main__":
     #                                     './data/{}_populations_antiIge.pickle'.format(test_size),
     #                                     max_combs=2**13, n_points=100, n_std=4)
 
-    k = 15
+    k = 13
     create_dataset(k=k)
     for i in range(k):
         precompute_large_moment_dataset('./data/{}_fold/{}_train.pickle'.format(k, i), 
                                 './data/{}_fold/{}_test.pickle'.format(k, i),
-                                max_combs=2**12, features=["mean", "min", "max", "median", "std", "q1", "q3"], k=k, idx=i)
+                                max_combs=2**12, features=["mean"], k=k, idx=i)
         # precompute_large_marginal_dataset('./data/{}_fold/{}_train.pickle'.format(k, i),
         #                                 './data/{}_fold/{}_test.pickle'.format(k, i),
         #                                 max_combs=2**12, n_points=60, n_std=3, k=k, idx=i)

@@ -193,4 +193,6 @@ otherwise with population split dataset)
 
 Meeting 07/02/2024:
 - UMAP for data vis to see if theres a trend
+No real trend when visualizing but outliers SBC10 and SBC24, however, removing them doesnt improve
+regression or classification performance
 - Write manuscript
