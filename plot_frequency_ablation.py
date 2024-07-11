@@ -85,7 +85,7 @@ f1_cd63 = [r - f1_cd63_ref for r in f1_cd63]
 f1_cd203c = [r - f1_cd203c_ref for r in f1_cd203c]
 
 # Plot the data
-width = 0.2  # the width of the bars
+width = 0.25  # the width of the bars
 x = np.arange(1,7)
 
 fig, ax = plt.subplots()
@@ -146,7 +146,7 @@ rects3 = ax.bar(x + width, f1_cd203c, width, label='CD203c', color=colors[2])
 # Add vertical lines
 for i in range(len(x)-1):
     ax.axvline((x[i] + x[i+1])/2, color='black', linestyle='--', linewidth=0.7)
-    
+
 # Add some text for labels, title and custom x-axis tick labels, etc.
 ax.set_ylabel('F1 change', fontsize=15)
 ax.set_xticks(x)

@@ -19,7 +19,7 @@ print(patient_ids)
 reducer = umap.UMAP(n_components=3, metric='euclidean', random_state=42, n_neighbors=20, min_dist=0.5)
 umap_data = reducer.fit_transform(x)
 
-start = 6
+start = 0
 
 # plot 3d
 fig = plt.figure()

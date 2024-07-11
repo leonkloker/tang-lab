@@ -88,7 +88,7 @@ f1_cd63 = [r - f1_cd63_ref for r in f1_cd63]
 f1_cd203c = [r - f1_cd203c_ref for r in f1_cd203c]
 
 # Plot the data
-width = 0.2  # the width of the bars
+width = 0.25  # the width of the bars
 x = np.array([1,2,3,4,6])
 xv = np.array([1,2,3,4,5,6])
 

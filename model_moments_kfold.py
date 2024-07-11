@@ -6,6 +6,8 @@ import pandas as pd
 import random
 from scipy.stats import pearsonr
 from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.ensemble import AdaBoostRegressor
+import sklearn.linear_model
 from sklearn.metrics import f1_score
 import sklearn.pipeline
 from sklearn.svm import SVC, SVR
@@ -46,7 +48,7 @@ def train_model(pipeline, train, test, classification=False, weights=None, antig
 
 filename = "./results/15_fold_mean_unnormalized_freqs{}.txt".format("".join(sys.argv[1:]))
 f = open(filename, "w")
-sys.stdout = f
+#sys.stdout = f
 
 # k-fold cross validation
 k = 15
@@ -78,9 +80,10 @@ lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
 ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
 svr = SVR(kernel='linear')
 svc = SVC(kernel='linear')
-xgblinear = xgb.XGBRegressor(n_estimators=100, learning_rate=0.1, objective='reg:squarederror', booster='gblinear')
+xgblinear = xgb.XGBRegressor(n_estimators=1, learning_rate=1.0, objective='reg:squarederror', booster='gblinear', reg_lambda=0, reg_alpha=0)
 xgbtree = xgb.XGBRegressor(max_depth=3, n_estimators=100, learning_rate=0.1, objective='reg:squarederror', booster='gbtree')
 xgbtreec = xgb.XGBClassifier(max_depth=3, n_estimators=100, learning_rate=0.1, objective='multi:softmax', num_class=len(bins)-1)
+adalinear = AdaBoostRegressor(estimator=sklin.LinearRegression(), n_estimators=5, random_state=42, loss="square", learning_rate=0.1)
 naive_bayes = GaussianNB()
 nearest_centroid = NearestCentroid()
 random_forest = RandomForestClassifier(n_estimators=100, random_state=0)
@@ -116,6 +119,9 @@ xgblinear_y_pred_cd63 = []
 xgbtreec_y_pred_avidin = []
 xgbtreec_y_pred_cd203c = []
 xgbtreec_y_pred_cd63 = []
+adalinear_y_pred_avidin = []
+adalinear_y_pred_cd203c = []
+adalinear_y_pred_cd63 = []
 naive_bayes_y_pred_avidin = []
 naive_bayes_y_pred_cd203c = []
 naive_bayes_y_pred_cd63 = []
@@ -154,6 +160,10 @@ xgbtree_pipeline_cd63 = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScal
 xgblinear_pipeline_avidin = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', xgblinear)])
 xgblinear_pipeline_cd203c = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', xgblinear)])
 xgblinear_pipeline_cd63 = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', xgblinear)])
+
+adalinear_pipeline_avidin = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', adalinear)])
+adalinear_pipeline_cd203c = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', adalinear)])
+adalinear_pipeline_cd63 = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', adalinear)])
 
 xgbtreec_pipeline_avidin = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', xgbtreec)])
 xgbtreec_pipeline_cd203c = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', xgbtreec)])
@@ -236,6 +246,10 @@ for i in range(k):
     _, y_pred_xgblinear_cd203c, (mae_xgblinear_cd203c, pearson_xgblinear_cd203c) = train_model(xgblinear_pipeline_cd203c, (x_train, y_train_cd203c), (x_test, y_test_cd203c), weights=weights_cd203c, antigen="cd203c")
     _, y_pred_xgblinear_cd63, (mae_xgblinear_cd63, pearson_xgblinear_cd63) = train_model(xgblinear_pipeline_cd63, (x_train, y_train_cd63), (x_test, y_test_cd63), weights=weights_cd63, antigen="cd63")
 
+    _, y_pred_adalinear_avidin, (mae_adalinear_avidin, pearson_adalinear_avidin) = train_model(adalinear_pipeline_avidin, (x_train, y_train_avidin), (x_test, y_test_avidin), weights=weights_avidin, antigen="avidin")
+    _, y_pred_adalinear_cd203c, (mae_adalinear_cd203c, pearson_adalinear_cd203c) = train_model(adalinear_pipeline_cd203c, (x_train, y_train_cd203c), (x_test, y_test_cd203c), weights=weights_cd203c, antigen="cd203c")
+    _, y_pred_adalinear_cd63, (mae_adalinear_cd63, pearson_adalinear_cd63) = train_model(adalinear_pipeline_cd63, (x_train, y_train_cd63), (x_test, y_test_cd63), weights=weights_cd63, antigen="cd63")
+
     _, y_pred_svc_avidin, f1_svc_avidin = train_model(svc_pipeline_avidin, (x_train, y_train_avidin_binned), (x_test, y_test_avidin_binned), classification=True, antigen="avidin")
     _, y_pred_svc_cd203c, f1_svc_cd203c = train_model(svc_pipeline_cd203c, (x_train, y_train_cd203c_binned), (x_test, y_test_cd203c_binned), classification=True, antigen="cd203c")
     _, y_pred_svc_cd63, f1_svc_cd63 = train_model(svc_pipeline_cd63, (x_train, y_train_cd63_binned), (x_test, y_test_cd63_binned), classification=True, antigen="cd63")
@@ -285,6 +299,9 @@ for i in range(k):
     xgblinear_y_pred_avidin.extend(y_pred_xgblinear_avidin)
     xgblinear_y_pred_cd203c.extend(y_pred_xgblinear_cd203c)
     xgblinear_y_pred_cd63.extend(y_pred_xgblinear_cd63)
+    adalinear_y_pred_avidin.extend(y_pred_adalinear_avidin)
+    adalinear_y_pred_cd203c.extend(y_pred_adalinear_cd203c)
+    adalinear_y_pred_cd63.extend(y_pred_adalinear_cd63)
     xgbtreec_y_pred_avidin.extend(y_pred_xgbtreec_avidin)
     xgbtreec_y_pred_cd203c.extend(y_pred_xgbtreec_cd203c)
     xgbtreec_y_pred_cd63.extend(y_pred_xgbtreec_cd63)
@@ -334,6 +351,12 @@ print("CD203c : MAE = ", evaluate_model.mae(y_true_cd203c, xgblinear_y_pred_cd20
 print("CD63 : MAE = ", evaluate_model.mae(y_true_cd63, xgblinear_y_pred_cd63), ", Pearson correlation = ", pearsonr(xgblinear_y_pred_cd63, y_true_cd63)[0])
 print()
 
+print("AdaLinear : ")
+print("Avidin : MAE = ", evaluate_model.mae(y_true_avidin, adalinear_y_pred_avidin), ", Pearson correlation = ", pearsonr(adalinear_y_pred_avidin, y_true_avidin)[0])
+print("CD203c : MAE = ", evaluate_model.mae(y_true_cd203c, adalinear_y_pred_cd203c), ", Pearson correlation = ", pearsonr(adalinear_y_pred_cd203c, y_true_cd203c)[0])
+print("CD63 : MAE = ", evaluate_model.mae(y_true_cd63, adalinear_y_pred_cd63), ", Pearson correlation = ", pearsonr(adalinear_y_pred_cd63, y_true_cd63)[0])
+print()
+
 print("SVC : ")
 print("Avidin : F1 = ", f1_score(y_true_avidin_binned, svc_y_pred_avidin, average='weighted'))
 print("CD203c : F1 = ", f1_score(y_true_cd203c_binned, svc_y_pred_cd203c, average='weighted'))
@@ -366,47 +389,47 @@ print()
 
 f.close()
 
-# # Plot results
-# evaluate_model.plot_prediction(y_true_avidin, linear_y_pred_avidin, "./figures/moment_model/linear_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd203c, linear_y_pred_cd203c, "./figures/moment_model/linear_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd63, linear_y_pred_cd63, "./figures/moment_model/linear_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+# Plot results
+evaluate_model.plot_prediction(y_true_avidin, linear_y_pred_avidin, "./figures/moment_model/linear_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd203c, linear_y_pred_cd203c, "./figures/moment_model/linear_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd63, linear_y_pred_cd63, "./figures/moment_model/linear_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-# evaluate_model.plot_prediction(y_true_avidin, lasso_y_pred_avidin, "./figures/moment_model/lasso_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd203c, lasso_y_pred_cd203c, "./figures/moment_model/lasso_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd63, lasso_y_pred_cd63, "./figures/moment_model/lasso_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_avidin, lasso_y_pred_avidin, "./figures/moment_model/lasso_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd203c, lasso_y_pred_cd203c, "./figures/moment_model/lasso_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd63, lasso_y_pred_cd63, "./figures/moment_model/lasso_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-# evaluate_model.plot_prediction(y_true_avidin, ridge_y_pred_avidin, "./figures/moment_model/ridge_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd203c, ridge_y_pred_cd203c, "./figures/moment_model/ridge_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd63, ridge_y_pred_cd63, "./figures/moment_model/ridge_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_avidin, ridge_y_pred_avidin, "./figures/moment_model/ridge_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd203c, ridge_y_pred_cd203c, "./figures/moment_model/ridge_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd63, ridge_y_pred_cd63, "./figures/moment_model/ridge_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-# evaluate_model.plot_prediction(y_true_avidin, svr_y_pred_avidin, "./figures/moment_model/svr_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd203c, svr_y_pred_cd203c, "./figures/moment_model/svr_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd63, svr_y_pred_cd63, "./figures/moment_model/svr_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_avidin, svr_y_pred_avidin, "./figures/moment_model/svr_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd203c, svr_y_pred_cd203c, "./figures/moment_model/svr_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd63, svr_y_pred_cd63, "./figures/moment_model/svr_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-# evaluate_model.plot_prediction(y_true_avidin, xgbtree_y_pred_avidin, "./figures/moment_model/xgbtree_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd203c, xgbtree_y_pred_cd203c, "./figures/moment_model/xgbtree_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd63, xgbtree_y_pred_cd63, "./figures/moment_model/xgbtree_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_avidin, xgbtree_y_pred_avidin, "./figures/moment_model/xgbtree_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd203c, xgbtree_y_pred_cd203c, "./figures/moment_model/xgbtree_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd63, xgbtree_y_pred_cd63, "./figures/moment_model/xgbtree_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-# evaluate_model.plot_prediction(y_true_avidin, xgblinear_y_pred_avidin, "./figures/moment_model/xgblinear_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd203c, xgblinear_y_pred_cd203c, "./figures/moment_model/xgblinear_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-# evaluate_model.plot_prediction(y_true_cd63, xgblinear_y_pred_cd63, "./figures/moment_model/xgblinear_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_avidin, xgblinear_y_pred_avidin, "./figures/moment_model/xgblinear_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd203c, xgblinear_y_pred_cd203c, "./figures/moment_model/xgblinear_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluate_model.plot_prediction(y_true_cd63, xgblinear_y_pred_cd63, "./figures/moment_model/xgblinear_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-# evaluate_model.plot_confusion_matrix(y_true_avidin_binned, svc_y_pred_avidin, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, svc_y_pred_cd203c, bins_cd203c, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd63_binned, svc_y_pred_cd63, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_avidin_binned, svc_y_pred_avidin, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, svc_y_pred_cd203c, bins_cd203c, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd63_binned, svc_y_pred_cd63, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-# evaluate_model.plot_confusion_matrix(y_true_avidin_binned, xgbtreec_y_pred_avidin, bins, "./figures/moment_model/xgb_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, xgbtreec_y_pred_cd203c, bins_cd203c, "./figures/moment_model/xgb_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd63_binned, xgbtreec_y_pred_cd63, bins, "./figures/moment_model/xgb_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_avidin_binned, xgbtreec_y_pred_avidin, bins, "./figures/moment_model/xgb_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, xgbtreec_y_pred_cd203c, bins_cd203c, "./figures/moment_model/xgb_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd63_binned, xgbtreec_y_pred_cd63, bins, "./figures/moment_model/xgb_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-# evaluate_model.plot_confusion_matrix(y_true_avidin_binned, naive_bayes_y_pred_avidin, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, naive_bayes_y_pred_cd203c, bins_cd203c, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd63_binned, naive_bayes_y_pred_cd63, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_avidin_binned, naive_bayes_y_pred_avidin, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, naive_bayes_y_pred_cd203c, bins_cd203c, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd63_binned, naive_bayes_y_pred_cd63, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-# evaluate_model.plot_confusion_matrix(y_true_avidin_binned, nearest_centroid_y_pred_avidin, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, nearest_centroid_y_pred_cd203c, bins_cd203c, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd63_binned, nearest_centroid_y_pred_cd63, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_avidin_binned, nearest_centroid_y_pred_avidin, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, nearest_centroid_y_pred_cd203c, bins_cd203c, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_cd63_binned, nearest_centroid_y_pred_cd63, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-# evaluate_model.plot_confusion_matrix(y_true_avidin_binned, random_forest_y_pred_avidin, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, random_forest_y_pred_cd203c, bins_cd203c, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-# evaluate_model.plot_confusion_matrix(y_true_cd63_binned, random_forest_y_pred_cd63, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluate_model.plot_confusion_matrix(y_true_avidin_binned, random_forest_y_pred_avidin, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=True)
+evaluate_model.plot_confusion_matrix(y_true_cd203c_binned, random_forest_y_pred_cd203c, bins_cd203c, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=True)
+evaluate_model.plot_confusion_matrix(y_true_cd63_binned, random_forest_y_pred_cd63, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=True)
