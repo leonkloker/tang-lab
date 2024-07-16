@@ -11,7 +11,7 @@ from torch.utils.data import Dataset
 from sklearn.model_selection import KFold
 
 # Read in data from a csv file and return the populations and the activation rates
-def get_data(file, normalize_negative_control=False):
+def get_data_from_csv(file, normalize_negative_control=False):
     ifc_features = ['demod{}_r'.format(i) for i in range(0, 6)] + ['demod{}_theta'.format(i) for i in range(0, 6)]
     features = ifc_features + ["cd63"] + ["cd203c_dMFI*"] + ["avidin"] + ['patient_id'] + ['date'] + ["dose"]
     df = pd.read_csv(file)[features]
@@ -165,7 +165,7 @@ def combine_populations(populations, y_raw, combine=True, max_combs=np.inf):
     combined_y = np.array(combined_y)
     return combined_populations, combined_y, combinations
 
-# take a list of combined populations and return the statistical moment features
+# take a list of populations and return the statistical moment features of each population
 def get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt", "min", "max", "median", "quartiles", "entropy", "deciles"]):
     # Calculate the features for each combined population
     x = []
@@ -198,12 +198,13 @@ def get_statistical_moment_features(combined_populations, features=["mean", "std
     x = np.concatenate(x, axis=1)
     return x
 
-def calculate_entropy(array, grid_points=100):
-    row_entropies = []
-    for row in np.array(array).T:
-        kde = scipy.stats.gaussian_kde(row)
+# take a population and return the entropy of each feature
+def calculate_entropy(population, grid_points=100):
+    feature_entropies = []
+    for feature in np.array(population).T:
+        kde = scipy.stats.gaussian_kde(feature)
         
-        min_sample, max_sample = min(row), max(row)
+        min_sample, max_sample = min(feature), max(feature)
         grid = np.linspace(min_sample, max_sample, grid_points)
         pdf_values = kde(grid)
         
@@ -211,9 +212,10 @@ def calculate_entropy(array, grid_points=100):
         
         entropy_value = scipy.stats.entropy(pdf_values)
         
-        row_entropies.append(entropy_value)
-    return np.array(row_entropies)
+        feature_entropies.append(entropy_value)
+    return np.array(feature_entropies)
 
+# take a list of activation rates, bins them and return class labels
 def bin(y, bins, verbose=False):
     y = np.where(np.array(y) < bins[0], bins[0], y)
     y = np.digitize(y, bins)
@@ -251,18 +253,7 @@ def get_query_points_marginal(features_list, n_points=20, n_std=2):
     query_points = np.transpose(np.linspace(mean - n_std*std, mean + n_std*std, n_points+2)[1:-1,:])
     return query_points
 
-def get_fixed_size_subsample(populations, y, size=200):
-    subsamples = []
-    y_subsamples = []
-    for x, y_ in zip(populations, y):
-        n = len(x)
-        if n < size:
-            continue
-        idx = np.random.choice(n, size, replace=False)
-        subsamples.append(np.array(x)[idx, :])
-        y_subsamples.append(y_)
-    return np.array(subsamples).reshape(len(subsamples), -1), y_subsamples
-
+# helper function to load a pickle file
 def pickleLoader(pklFile):
     try:
         while True:
@@ -283,21 +274,21 @@ def load_data(file):
         for event in pickleLoader(f):
             res.append(event)
     return tuple(res)
-        
+
+# Create a dataset of the single-cell ifc features from the given file
 def create_dataset(control=False, k=None):
-    # load data
+
+    # load raw csv data
     file = './data/bat_ifc.csv'
-    samples, y_avidin, y_cd203c, y_cd63, patient_id = get_data(file, normalize_negative_control=control)
+    samples, y_avidin, y_cd203c, y_cd63, patient_id = get_data_from_csv(file, normalize_negative_control=control)
 
     print("Number of samples: {}".format(len(samples)))
     print("Number of patients: {}".format(len(set(patient_id))))
 
-    # add opacity to the populations (now already done in get_data)
-    # samples = add_opacity(samples)
-
     # train/val patients
     patient_set = list(sorted(set(patient_id)))
-
+    
+    # create k-fold cross-validation splits
     if k != None:
         os.makedirs('./data/{}_fold'.format(k), exist_ok=True)
         kf = KFold(n_splits=k, shuffle=True, random_state=42)
@@ -327,6 +318,7 @@ def create_dataset(control=False, k=None):
                 save_data('./data/{}_fold_control/{}_train.pickle'.format(k, i), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
                 save_data('./data/{}_fold_control/{}_test.pickle'.format(k, i), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
+    # create train/val split
     else:
         train_val_patients = np.random.choice(patient_set, int(len(patient_set)*0.8), replace=False)
 
@@ -357,19 +349,25 @@ def create_dataset(control=False, k=None):
 
         return len(x_train), len(x_test)
 
+# Calculates the marginal features of all the 17 features of all given populations
+# where file_train and file_test are the paths to the single-cell training and test data
 def precompute_large_marginal_dataset(file_train, file_test, max_combs=2**12,
-                             n_points=20, n_std=2, k=None, idx=None):
+                             n_points=20, n_std=2, k=None, fold_idx=None):
+    
+    # load the populations and their respective activation rates
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = load_data(file_train)
     x_test, y_test_avidin, y_test_cd203c, y_test_cd63 = load_data(file_test)
 
-    # Shuffle the data
+    # shuffle the data
     xy = list(zip(x_train, y_train_avidin, y_train_cd203c, y_train_cd63))
     random.shuffle(xy)
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = zip(*xy)
     N = len(x_train)
 
+    # data augmentation either by mixing different populations to also get appropriately weighted
+    # new activation rates or by resampling the same populations to get more samples
     print("Combining the training populations...")
-    # Subsample the populations to get dataset
+    # subsample the populations to get dataset
     np.random.seed(3)
     x_train_mixy, y_train_avidin_mixy, _, _ = subsample_populations_mixy(x_train, y_train_avidin, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
     np.random.seed(3)
@@ -383,35 +381,44 @@ def precompute_large_marginal_dataset(file_train, file_test, max_combs=2**12,
     np.random.seed(3)
     x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=0.75, combs_per_sample=int(max_combs/N))
 
+    # combine the augmented populations
     x_train = [*x_train_mixy, *x_train_consty]
     y_train_avidin = [*y_train_avidin_mixy, *y_train_avidin_consty]
     y_train_cd203c = [*y_train_cd203c_mixy, *y_train_cd203c_consty]
     y_train_cd63 = [*y_train_cd63_mixy, *y_train_cd63_consty]
 
     print("Estimating the marginal distributions...")
-    # Get the marginal distribution features
+    # get the marginal distribution features
     query_points = get_query_points_marginal(x_train, n_points=n_points, n_std=n_std)
     x_train = get_marginal_distributions(x_train, query_points)
     x_test = get_marginal_distributions(x_test, query_points)
     
+    # save the data
     if k is None:
         save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_marginal_std{}_{}.pickle'.format(N, len(x_train), n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
         save_data('./data/{}_populations_precomputed_testset_antiIge_marginal_std{}_{}.pickle'.format(len(x_test), n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
     else:
-        save_data('./data/{}_fold/{}_train_std{}_{}.pickle'.format(k, idx, n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-        save_data('./data/{}_fold/{}_test_std{}_{}.pickle'.format(k, idx, n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+        save_data('./data/{}_fold/{}_train_std{}_{}.pickle'.format(k, fold_idx, n_std, n_points), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_fold/{}_test_std{}_{}.pickle'.format(k, fold_idx, n_std, n_points), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
-def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, features=["mean"], k=None, idx=None):
+# Calculates the statistical moments of all the 17 features of all given populations
+# where file_train and file_test are the paths to the single-cell training and test data
+def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, features=["mean"], k=None, fold_idx=None):
+
+    # load the populations and their respective activation rates
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = load_data(file_train)
     x_test, y_test_avidin, y_test_cd203c, y_test_cd63 = load_data(file_test)
 
-    # Shuffle the data
+    # shuffle the data
     xy = list(zip(x_train, y_train_avidin, y_train_cd203c, y_train_cd63))
     random.shuffle(xy)
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = zip(*xy)
     N = len(x_train)
 
+    # data augmentation either by mixing different populations to also get appropriately weighted
+    # new activation rates or by resampling the same populations to get more samples
     print("Combining the training populations...")
+
     # Subsample the populations to get dataset
     # np.random.seed(3)
     # x_train_mixy, y_train_avidin_mixy, _, _ = subsample_populations_mixy(x_train, y_train_avidin, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
@@ -426,11 +433,13 @@ def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, feat
     np.random.seed(3)
     x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=1.0, combs_per_sample=int(max_combs/N))
 
+    # combine the augmented populations
     x_train = [*x_train_consty] #[*x_train_mixy, *x_train_consty]
     y_train_avidin = [*y_train_avidin_consty] #[*y_train_avidin_mixy, *y_train_avidin_consty]
     y_train_cd203c = [*y_train_cd203c_consty] #[*y_train_cd203c_mixy, *y_train_cd203c_consty]
     y_train_cd63 = [*y_train_cd63_consty] #[*y_train_cd63_mixy, *y_train_cd63_consty]
 
+    # calculate the statistical moment features
     x_train = get_statistical_moment_features(x_train, features=features)
     x_test = get_statistical_moment_features(x_test, features=features)
 
@@ -439,10 +448,13 @@ def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, feat
         save_data('./data/{}_populations_{}_combinations_precomputed_trainset_antiIge_{}.pickle'.format(N, len(x_train), "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
         save_data('./data/{}_populations_precomputed_testset_antiIge_{}.pickle'.format(len(x_test), "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)    
     else:
-        save_data('./data/{}_fold/{}_train_{}.pickle'.format(k, idx, "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
-        save_data('./data/{}_fold/{}_test_{}.pickle'.format(k, idx, "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
+        save_data('./data/{}_fold/{}_train_{}.pickle'.format(k, fold_idx, "_".join(features)), x_train, y_train_avidin, y_train_cd203c, y_train_cd63)
+        save_data('./data/{}_fold/{}_test_{}.pickle'.format(k, fold_idx, "_".join(features)), x_test, y_test_avidin, y_test_cd203c, y_test_cd63)
 
 
+# Dataset class that returns the normalized cell feature values for all cells in
+# a generated population and the activation rate for the population as one single 
+# ground truth value for the entire population
 class Single_cell_dataset(Dataset):
     def __init__(self, file, max_combs=2**10, antigen="cd63", means=None, stds=None):
         np.random.seed(3)
@@ -484,23 +496,27 @@ class Single_cell_dataset(Dataset):
     def __getitem__(self, idx):
         return ((np.array(self.x[idx]) - self.means) / self.stds).astype("float32"), self.y[idx].astype("float32")
 
-if __name__ == "__main__":
-    np.random.seed(5)
-    random.seed(4)
-    #train_size, test_size = create_dataset(control=False, k=5)
-    # precompute_large_moment_dataset('./data/{}_populations_antiIge.pickle'.format(train_size), 
-    #                         './data/{}_populations_antiIge.pickle'.format(test_size),
-    #                            max_combs=2**13, features=["mean", "min", "max", "median", "std", "q1", "q3", "range", "interquartile_range"])
-    # precompute_large_marginal_dataset('./data/{}_populations_antiIge.pickle'.format(train_size),
-    #                                     './data/{}_populations_antiIge.pickle'.format(test_size),
-    #                                     max_combs=2**13, n_points=100, n_std=4)
-    
+# Creates a kfold cross validation dataset in /data to be run with model_moments_kfold.py
+# or model_marginals_kfold.py when the marginal dataset is created
+def create_kfold_dataset():
+
+    # amount of folds
     k = 15
+
+    # load data from bat_ifc.csv and create the kfold dataset with the raw cell feature values
     create_dataset(k=k)
+
+    # go through all folds and calculate the statistical moment features 
+    # or marginal features for both train and test dataset
     for i in range(k):
         precompute_large_moment_dataset('./data/{}_fold/{}_train.pickle'.format(k, i), 
                                 './data/{}_fold/{}_test.pickle'.format(k, i),
-                                max_combs=2**8, features=["mean", "entropy", "deciles"], k=k, idx=i)
+                                max_combs=2**8, features=["mean"], k=k, fold_idx=i)
         # precompute_large_marginal_dataset('./data/{}_fold/{}_train.pickle'.format(k, i),
         #                                 './data/{}_fold/{}_test.pickle'.format(k, i),
-        #                                 max_combs=2**12, n_points=60, n_std=3, k=k, idx=i)
+        #                                 max_combs=2**8, n_points=60, n_std=3, k=k, fold_idx=i)
+
+if __name__ == "__main__":
+    np.random.seed(5)
+    random.seed(4)
+    create_kfold_dataset()

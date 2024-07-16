@@ -46,9 +46,10 @@ def train_model(pipeline, train, test, classification=False, weights=None, antig
 
     return pipeline, y_pred, metric
 
+# Save the results to a file
 filename = "./results/15_fold_mean_unnormalized_freqs{}.txt".format("".join(sys.argv[1:]))
 f = open(filename, "w")
-#sys.stdout = f
+sys.stdout = f
 
 # k-fold cross validation
 k = 15
@@ -57,7 +58,7 @@ k = 15
 samples = 9000
 
 # Model hyperparameters
-features = ["mean", "entropy", "deciles"] #, "min", "max", "median", "std", "q1", "q3"]
+features = ["mean"] #, "min", "max", "median", "std", "q1", "q3"]
 
 # Bin labels for classification
 bins_cd203c = [0., 1.0, 14.2]
@@ -68,13 +69,15 @@ weight_factor_low_activation = 1
 
 # Features to use
 ifc_features_baseline = np.arange(0, 17)
+
+# Frequencies to remove are taken as command line arguments
 rm_freqs = [int(s) for s in sys.argv[1:]]
 
-# Regularization parameters
+# Regularization parameters for Lasso and Ridge
 alpha_lasso = 0.01
 alpha_ridge = 1.0
 
-# Define models
+# Define all models
 linear = sklin.LinearRegression()
 lasso = sklin.Lasso(alpha=alpha_lasso, max_iter=10000)
 ridge = sklin.Ridge(alpha=alpha_ridge, max_iter=10000)
@@ -181,13 +184,16 @@ random_forest_pipeline_avidin = sklearn.pipeline.Pipeline(steps=[('scaler', Stan
 random_forest_pipeline_cd203c = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', random_forest)])
 random_forest_pipeline_cd63 = sklearn.pipeline.Pipeline(steps=[('scaler', StandardScaler()), ('model', random_forest)])
 
+# Loop over all folds
 for i in range(k):
+
     # Read in the precomputed, combined populations and all activation levels
     file_train = './data/{}_fold/{}_train_{}.pickle'.format(k, i, "_".join(features))
     file_test = './data/{}_fold/{}_test_{}.pickle'.format(k, i, "_".join(features))
     x_train, y_train_avidin, y_train_cd203c, y_train_cd63 = data.load_data(file_train)
     x_test, y_test_avidin, y_test_cd203c, y_test_cd63 = data.load_data(file_test)
 
+    # Only use as many samples as specified
     x_train = x_train[:samples]
     y_train_avidin = y_train_avidin[:samples]
     y_train_cd203c = y_train_cd203c[:samples]
@@ -206,7 +212,7 @@ for i in range(k):
     y_test_cd203c_binned = data.bin(y_test_cd203c, bins_cd203c, verbose=False)
     y_test_cd63_binned = data.bin(y_test_cd63, bins, verbose=False)
 
-    # Baseline features for best performing model
+    # Remove frequencies from the features
     ifc_features = []
     for feature in ifc_features_baseline:
         use = True
@@ -315,6 +321,7 @@ for i in range(k):
     random_forest_y_pred_cd203c.extend(y_pred_random_forest_cd203c)
     random_forest_y_pred_cd63.extend(y_pred_random_forest_cd63)
 
+# Print results
 print("Linear Regression : ")
 print("Avidin : MAE = ", evaluation.mae(y_true_avidin, linear_y_pred_avidin), ", Pearson correlation = ", pearsonr(linear_y_pred_avidin, y_true_avidin)[0])
 print("CD203c : MAE = ", evaluation.mae(y_true_cd203c, linear_y_pred_cd203c), ", Pearson correlation = ", pearsonr(linear_y_pred_cd203c, y_true_cd203c)[0])
@@ -430,6 +437,6 @@ evaluation.plot_confusion_matrix(y_true_avidin_binned, nearest_centroid_y_pred_a
 evaluation.plot_confusion_matrix(y_true_cd203c_binned, nearest_centroid_y_pred_cd203c, bins_cd203c, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 evaluation.plot_confusion_matrix(y_true_cd63_binned, nearest_centroid_y_pred_cd63, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-evaluation.plot_confusion_matrix(y_true_avidin_binned, random_forest_y_pred_avidin, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=False)
-evaluation.plot_confusion_matrix(y_true_cd203c_binned, random_forest_y_pred_cd203c, bins_cd203c, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=False)
-evaluation.plot_confusion_matrix(y_true_cd63_binned, random_forest_y_pred_cd63, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=False)
+evaluation.plot_confusion_matrix(y_true_avidin_binned, random_forest_y_pred_avidin, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=True)
+evaluation.plot_confusion_matrix(y_true_cd203c_binned, random_forest_y_pred_cd203c, bins_cd203c, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=True)
+evaluation.plot_confusion_matrix(y_true_cd63_binned, random_forest_y_pred_cd63, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True, normalize=True)
