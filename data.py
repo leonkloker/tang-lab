@@ -166,7 +166,7 @@ def combine_populations(populations, y_raw, combine=True, max_combs=np.inf):
     return combined_populations, combined_y, combinations
 
 # take a list of combined populations and return the statistical moment features
-def get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt", "min", "max", "median", "q1", "q3"]):
+def get_statistical_moment_features(combined_populations, features=["mean", "std", "skew", "kurt", "min", "max", "median", "quartiles", "entropy", "deciles"]):
     # Calculate the features for each combined population
     x = []
         
@@ -184,17 +184,35 @@ def get_statistical_moment_features(combined_populations, features=["mean", "std
         x.append(np.array([np.max(combined_population, axis=0) for combined_population in combined_populations]))
     if "median" in features:
         x.append(np.array([np.median(combined_population, axis=0) for combined_population in combined_populations]))
-    if "q1" in features:
-        x.append(np.array([np.percentile(combined_population, 25, axis=0) for combined_population in combined_populations]))
-    if "q3" in features:
-        x.append(np.array([np.percentile(combined_population, 75, axis=0) for combined_population in combined_populations]))
+    if "quartiles" in features:
+        x.append(np.array([np.percentile(combined_population, [25, 75], axis=0).reshape(-1) for combined_population in combined_populations]))
     if "range" in features:
         x.append(np.array([np.max(combined_population, axis=0) - np.min(combined_population, axis=0) for combined_population in combined_populations]))
     if "interquartile_range" in features:
         x.append(np.array([np.percentile(combined_population, 75, axis=0) - np.percentile(combined_population, 25, axis=0) for combined_population in combined_populations]))
+    if "entropy" in features:
+        x.append(np.array([calculate_entropy(combined_population) for combined_population in combined_populations]))
+    if "deciles" in features:
+        x.append(np.array([np.percentile(combined_population, np.arange(0, 100, 10), axis=0).reshape(-1) for combined_population in combined_populations]))
 
     x = np.concatenate(x, axis=1)
     return x
+
+def calculate_entropy(array, grid_points=100):
+    row_entropies = []
+    for row in np.array(array).T:
+        kde = scipy.stats.gaussian_kde(row)
+        
+        min_sample, max_sample = min(row), max(row)
+        grid = np.linspace(min_sample, max_sample, grid_points)
+        pdf_values = kde(grid)
+        
+        pdf_values /= pdf_values.sum()
+        
+        entropy_value = scipy.stats.entropy(pdf_values)
+        
+        row_entropies.append(entropy_value)
+    return np.array(row_entropies)
 
 def bin(y, bins, verbose=False):
     y = np.where(np.array(y) < bins[0], bins[0], y)
@@ -402,11 +420,11 @@ def precompute_large_moment_dataset(file_train, file_test, max_combs=2**12, feat
     # np.random.seed(3)
     # x_train_mixy, y_train_cd63_mixy, _, _ = subsample_populations_mixy(x_train, y_train_cd63, train_split=.99, combine_train=True, combine_test=False, max_combs=max_combs)
     np.random.seed(3)
-    x_train_consty, y_train_avidin_consty, _, _ = subsample_populations_consty(x_train, y_train_avidin, train_split=.99, sample_size=0.8, combs_per_sample=int(max_combs/N))
+    x_train_consty, y_train_avidin_consty, _, _ = subsample_populations_consty(x_train, y_train_avidin, train_split=.99, sample_size=1.0, combs_per_sample=int(max_combs/N))
     np.random.seed(3)
-    x_train_consty, y_train_cd203c_consty, _, _ = subsample_populations_consty(x_train, y_train_cd203c, train_split=.99, sample_size=0.8, combs_per_sample=int(max_combs/N))
+    x_train_consty, y_train_cd203c_consty, _, _ = subsample_populations_consty(x_train, y_train_cd203c, train_split=.99, sample_size=1.0, combs_per_sample=int(max_combs/N))
     np.random.seed(3)
-    x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=0.8, combs_per_sample=int(max_combs/N))
+    x_train_consty, y_train_cd63_consty, _, _ = subsample_populations_consty(x_train, y_train_cd63, train_split=.99, sample_size=1.0, combs_per_sample=int(max_combs/N))
 
     x_train = [*x_train_consty] #[*x_train_mixy, *x_train_consty]
     y_train_avidin = [*y_train_avidin_consty] #[*y_train_avidin_mixy, *y_train_avidin_consty]
@@ -476,13 +494,13 @@ if __name__ == "__main__":
     # precompute_large_marginal_dataset('./data/{}_populations_antiIge.pickle'.format(train_size),
     #                                     './data/{}_populations_antiIge.pickle'.format(test_size),
     #                                     max_combs=2**13, n_points=100, n_std=4)
-
-    k = 13
+    
+    k = 15
     create_dataset(k=k)
     for i in range(k):
         precompute_large_moment_dataset('./data/{}_fold/{}_train.pickle'.format(k, i), 
                                 './data/{}_fold/{}_test.pickle'.format(k, i),
-                                max_combs=2**12, features=["mean"], k=k, idx=i)
+                                max_combs=2**8, features=["mean", "entropy", "deciles"], k=k, idx=i)
         # precompute_large_marginal_dataset('./data/{}_fold/{}_train.pickle'.format(k, i),
         #                                 './data/{}_fold/{}_test.pickle'.format(k, i),
         #                                 max_combs=2**12, n_points=60, n_std=3, k=k, idx=i)

@@ -19,7 +19,7 @@ import pickle
 import xgboost as xgb
 
 import data
-import evaluate_model
+import evaluation
 
 def train_model(pipeline, train, test, classification=False, weights=None, antigen="cd63"):
     # Train the model
@@ -275,30 +275,30 @@ print("CD203c : F1 score = ", f1_random_forest_cd203c)
 print("CD63 : F1 score = ", f1_random_forest_cd63)
 print()
 
-# evaluate_model.plot_prediction(y_test_avidin, y_pred_linear_avidin, "./figures/marginal_model/linear_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd203c, y_pred_linear_cd203c, "./figures/marginal_model/linear_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd63, y_pred_linear_cd63, "./figures/marginal_model/linear_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_avidin, y_pred_linear_avidin, "./figures/marginal_model/linear_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd203c, y_pred_linear_cd203c, "./figures/marginal_model/linear_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd63, y_pred_linear_cd63, "./figures/marginal_model/linear_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
                                
-# evaluate_model.plot_prediction(y_test_avidin, y_pred_lasso_avidin, "./figures/marginal_model/lasso_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd203c, y_pred_lasso_cd203c, "./figures/marginal_model/lasso_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd63, y_pred_lasso_cd63, "./figures/marginal_model/lasso_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_avidin, y_pred_lasso_avidin, "./figures/marginal_model/lasso_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd203c, y_pred_lasso_cd203c, "./figures/marginal_model/lasso_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd63, y_pred_lasso_cd63, "./figures/marginal_model/lasso_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
 
-# evaluate_model.plot_prediction(y_test_avidin, y_pred_ridge_avidin, "./figures/marginal_model/ridge_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd203c, y_pred_ridge_cd203c, "./figures/marginal_model/ridge_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd63, y_pred_ridge_cd63, "./figures/marginal_model/ridge_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_avidin, y_pred_ridge_avidin, "./figures/marginal_model/ridge_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd203c, y_pred_ridge_cd203c, "./figures/marginal_model/ridge_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd63, y_pred_ridge_cd63, "./figures/marginal_model/ridge_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
 
-# evaluate_model.plot_prediction(y_test_avidin, y_pred_svr_avidin, "./figures/marginal_model/svr_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd203c, y_pred_svr_cd203c, "./figures/marginal_model/svr_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd63, y_pred_svr_cd63, "./figures/marginal_model/svr_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_avidin, y_pred_svr_avidin, "./figures/marginal_model/svr_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd203c, y_pred_svr_cd203c, "./figures/marginal_model/svr_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd63, y_pred_svr_cd63, "./figures/marginal_model/svr_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
 
-# evaluate_model.plot_prediction(y_test_avidin, y_pred_xgb_avidin, "./figures/marginal_model/xgbtree_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd203c, y_pred_xgb_cd203c, "./figures/marginal_model/xgbtree_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd63, y_pred_xgb_cd63, "./figures/marginal_model/xgbtree_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_avidin, y_pred_xgb_avidin, "./figures/marginal_model/xgbtree_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd203c, y_pred_xgb_cd203c, "./figures/marginal_model/xgbtree_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd63, y_pred_xgb_cd63, "./figures/marginal_model/xgbtree_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
 
-# evaluate_model.plot_prediction(y_test_avidin, y_pred_xgblinear_avidin, "./figures/marginal_model/xgblinear_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd203c, y_pred_xgblinear_cd203c, "./figures/marginal_model/xgblinear_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
-# evaluate_model.plot_prediction(y_test_cd63, y_pred_xgblinear_cd63, "./figures/marginal_model/xgblinear_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_avidin, y_pred_xgblinear_avidin, "./figures/marginal_model/xgblinear_regression_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd203c, y_pred_xgblinear_cd203c, "./figures/marginal_model/xgblinear_regression_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
+evaluation.plot_prediction(y_test_cd63, y_pred_xgblinear_cd63, "./figures/marginal_model/xgblinear_regression_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points))
                                
-# evaluate_model.plot_confusion_matrix(y_test_avidin_binned, y_pred_svc_avidin, bins, "./figures/marginal_model/sv_classifier_confusion_matrix_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points), labels=True)
-# evaluate_model.plot_confusion_matrix(y_test_cd203c_binned, y_pred_svc_cd203c, bins_cd203c, "./figures/marginal_model/sv_classifier_confusion_matrix_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points), labels=True)
-# evaluate_model.plot_confusion_matrix(y_test_cd63_binned, y_pred_svc_cd63, bins, "./figures/marginal_model/sv_classifier_confusion_matrix_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points), labels=True)
+evaluation.plot_confusion_matrix(y_test_avidin_binned, y_pred_svc_avidin, bins, "./figures/marginal_model/sv_classifier_confusion_matrix_{}avidin_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd203c_binned, y_pred_svc_cd203c, bins_cd203c, "./figures/marginal_model/sv_classifier_confusion_matrix_{}cd203c_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd63_binned, y_pred_svc_cd63, bins, "./figures/marginal_model/sv_classifier_confusion_matrix_{}cd63_std{}_{}.pdf".format("".join([str(n) for n in rm_freqs]), n_std, n_points), labels=True)

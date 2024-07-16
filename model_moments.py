@@ -20,7 +20,7 @@ import pickle
 import xgboost as xgb
 
 import data
-import evaluate_model
+import evaluation
 
 def train_model(pipeline, train, test, classification=False, weights=None, antigen="cd63"):
     # Train the model
@@ -273,46 +273,46 @@ print("CD203c : F1 score = ", f1_random_forest_cd203c)
 print("CD63 : F1 score = ", f1_random_forest_cd63)
 print()
 
-evaluate_model.plot_prediction(y_test_avidin, y_pred_linear_avidin, "./figures/moment_model/linear_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd203c, y_pred_linear_cd203c, "./figures/moment_model/linear_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd63, y_pred_linear_cd63, "./figures/moment_model/linear_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_avidin, y_pred_linear_avidin, "./figures/moment_model/linear_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd203c, y_pred_linear_cd203c, "./figures/moment_model/linear_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd63, y_pred_linear_cd63, "./figures/moment_model/linear_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
                                
-evaluate_model.plot_prediction(y_test_avidin, y_pred_lasso_avidin, "./figures/moment_model/lasso_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd203c, y_pred_lasso_cd203c, "./figures/moment_model/lasso_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd63, y_pred_lasso_cd63, "./figures/moment_model/lasso_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_avidin, y_pred_lasso_avidin, "./figures/moment_model/lasso_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd203c, y_pred_lasso_cd203c, "./figures/moment_model/lasso_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd63, y_pred_lasso_cd63, "./figures/moment_model/lasso_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-evaluate_model.plot_prediction(y_test_avidin, y_pred_ridge_avidin, "./figures/moment_model/ridge_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd203c, y_pred_ridge_cd203c, "./figures/moment_model/ridge_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd63, y_pred_ridge_cd63, "./figures/moment_model/ridge_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_avidin, y_pred_ridge_avidin, "./figures/moment_model/ridge_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd203c, y_pred_ridge_cd203c, "./figures/moment_model/ridge_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd63, y_pred_ridge_cd63, "./figures/moment_model/ridge_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-evaluate_model.plot_prediction(y_test_avidin, y_pred_svr_avidin, "./figures/moment_model/svr_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd203c, y_pred_svr_cd203c, "./figures/moment_model/svr_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd63, y_pred_svr_cd63, "./figures/moment_model/svr_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_avidin, y_pred_svr_avidin, "./figures/moment_model/svr_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd203c, y_pred_svr_cd203c, "./figures/moment_model/svr_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd63, y_pred_svr_cd63, "./figures/moment_model/svr_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-evaluate_model.plot_prediction(y_test_avidin, y_pred_xgb_avidin, "./figures/moment_model/xgbtree_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd203c, y_pred_xgb_cd203c, "./figures/moment_model/xgbtree_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd63, y_pred_xgb_cd63, "./figures/moment_model/xgbtree_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_avidin, y_pred_xgb_avidin, "./figures/moment_model/xgbtree_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd203c, y_pred_xgb_cd203c, "./figures/moment_model/xgbtree_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd63, y_pred_xgb_cd63, "./figures/moment_model/xgbtree_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
 
-evaluate_model.plot_prediction(y_test_avidin, y_pred_xgblinear_avidin, "./figures/moment_model/xgblinear_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd203c, y_pred_xgblinear_cd203c, "./figures/moment_model/xgblinear_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
-evaluate_model.plot_prediction(y_test_cd63, y_pred_xgblinear_cd63, "./figures/moment_model/xgblinear_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_avidin, y_pred_xgblinear_avidin, "./figures/moment_model/xgblinear_regression_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd203c, y_pred_xgblinear_cd203c, "./figures/moment_model/xgblinear_regression_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
+evaluation.plot_prediction(y_test_cd63, y_pred_xgblinear_cd63, "./figures/moment_model/xgblinear_regression_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)))
                                
-evaluate_model.plot_confusion_matrix(y_test_avidin_binned, y_pred_svc_avidin, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd203c_binned, y_pred_svc_cd203c, bins_cd203c, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd63_binned, y_pred_svc_cd63, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_avidin_binned, y_pred_svc_avidin, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd203c_binned, y_pred_svc_cd203c, bins_cd203c, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd63_binned, y_pred_svc_cd63, bins, "./figures/moment_model/sv_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-evaluate_model.plot_confusion_matrix(y_test_avidin_binned, y_pred_xgbtreec_avidin, bins, "./figures/moment_model/xgbtree_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd203c_binned, y_pred_xgbtreec_cd203c, bins_cd203c, "./figures/moment_model/xgbtree_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd63_binned, y_pred_xgbtreec_cd63, bins, "./figures/moment_model/xgbtree_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_avidin_binned, y_pred_xgbtreec_avidin, bins, "./figures/moment_model/xgbtree_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd203c_binned, y_pred_xgbtreec_cd203c, bins_cd203c, "./figures/moment_model/xgbtree_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd63_binned, y_pred_xgbtreec_cd63, bins, "./figures/moment_model/xgbtree_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-evaluate_model.plot_confusion_matrix(y_test_avidin_binned, y_pred_naive_bayes_avidin, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd203c_binned, y_pred_naive_bayes_cd203c, bins_cd203c, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd63_binned, y_pred_naive_bayes_cd63, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_avidin_binned, y_pred_naive_bayes_avidin, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd203c_binned, y_pred_naive_bayes_cd203c, bins_cd203c, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd63_binned, y_pred_naive_bayes_cd63, bins, "./figures/moment_model/naive_bayes_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-evaluate_model.plot_confusion_matrix(y_test_avidin_binned, y_pred_nearest_centroid_avidin, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd203c_binned, y_pred_nearest_centroid_cd203c, bins_cd203c, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd63_binned, y_pred_nearest_centroid_cd63, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_avidin_binned, y_pred_nearest_centroid_avidin, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd203c_binned, y_pred_nearest_centroid_cd203c, bins_cd203c, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd63_binned, y_pred_nearest_centroid_cd63, bins, "./figures/moment_model/nearest_centroid_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
 
-evaluate_model.plot_confusion_matrix(y_test_avidin_binned, y_pred_random_forest_avidin, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd203c_binned, y_pred_random_forest_cd203c, bins_cd203c, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
-evaluate_model.plot_confusion_matrix(y_test_cd63_binned, y_pred_random_forest_cd63, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_avidin_binned, y_pred_random_forest_avidin, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}avidin_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd203c_binned, y_pred_random_forest_cd203c, bins_cd203c, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd203c_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
+evaluation.plot_confusion_matrix(y_test_cd63_binned, y_pred_random_forest_cd63, bins, "./figures/moment_model/random_forest_classifier_confusion_matrix_{}cd63_{}.pdf".format("".join([str(n) for n in rm_freqs]), "_".join(features)), labels=True)
