@@ -52,3 +52,10 @@ on their features
 - `viisualize_marginal_distributions.py`: Contains a script to estimate the marginal distribution
 of each of the 17 features for a given population using kernel density estimation and plots the 
 resulting distribution and the sampling points (obsolete as final model does not work with marginal distributions)
+
+How to create paper figures:
+- run data.py to generate a leave-one-out cross-validation dataset
+- run model_moments_kfold.py with the frequencies to be removed as integer command line arguments to generate regression plots and confusion matrices in ./figures/moment_model/ and to create a results file in ./results/
+- run model_moments_kfold.py with all possible one or two frequency combinations as command line arguments to create the result files for ablation studies
+- manually adjust the reference Pearson, MAE and F1 score in plot_frequency_ablation_* files by using the result of model_moments_kfold.py when no frequency is omitted
+- run all plot_frequency_ablation_* files to generate the frequency ablation plots

@@ -200,3 +200,6 @@ Meeting 07/09/2024:
 - Write manuscript
 * - Update data before running figures
 * - Clean up code and folder structure
+
+Meeting 07/16/2024:
+- Create pool figure
